@@ -39,7 +39,7 @@ namespace SongRequestManagerV2.Views
 #else
                 const string SEARCH = @"
 
-[CLEAR SEARCH]/0 /2 [NEWEST]/0 /2 [UNFILTERED]/30 /2 [SEARCH]/0";
+[清空搜索]/0 /2 [最新]/0 /2 [不过滤]/30 /2 [搜索]/0";
 
 #endif
 
@@ -47,10 +47,10 @@ namespace SongRequestManagerV2.Views
                 mykeyboard.SetButtonType("OkButton"); // Adding this alters button positions??! Why?
                 mykeyboard.AddKeys(SEARCH, 0.75f);
 
-                mykeyboard.SetAction("CLEAR SEARCH", key => { this._bot?.ClearSearch(key); });
-                mykeyboard.SetAction("UNFILTERED", this._bot.UnfilteredSearch);
-                mykeyboard.SetAction("SEARCH", this._bot.MSD);
-                mykeyboard.SetAction("NEWEST", this._bot.Newest);
+                mykeyboard.SetAction("清空搜索", key => { this._bot?.ClearSearch(key); });
+                mykeyboard.SetAction("不过滤", this._bot.UnfilteredSearch);
+                mykeyboard.SetAction("搜索", this._bot.MSD);
+                mykeyboard.SetAction("最新", this._bot.Newest);
 
 
 #if UNRELEASED

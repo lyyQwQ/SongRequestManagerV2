@@ -1,7 +1,7 @@
 ﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
   <horizontal horizontal-fit='MinSize' child-align='MiddleLeft'>
     <vertical min-width='50' child-align='LowerLeft' horizontal-fit='Unconstrained'>
-      <checkbox text='PerformanceMode' value='performance-mode' bind-value='true' apply-on-change='true' hover-hint='Only execute command in menu.' preferred-width='50'></checkbox>
+      <checkbox text='性能模式' value='performance-mode' bind-value='true' apply-on-change='true' hover-hint='只在菜单时执行命令' preferred-width='50'></checkbox>
       <text text='~progress-text' align='BottomLeft' word-wrapping='false' overflow-mode='Overflow' anchor-max-x='0' anchor-min-x='0' anchor-max-y='1' anchor-min-y='0'></text>
     </vertical>
     <vertical min-width='80'>
@@ -24,11 +24,11 @@
     <vertical min-width='50' child-expand-width='true' pad='5'>
       <button text='~history-button-text' interactable='~history-button-enable' on-click='history-click' hover-hint='~history-hint' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
       <vertical pad-top='8' pad-bottom='8'>
-        <button text='~skip-button-text' interactable='~skip-button-enable' hover-hint='Remove the selected request from the queue.' on-click='skip-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
-        <button text='~blacklist-button-text' interactable='~blacklist-button-enable' hover-hint='Block the selected request from being queued in the future.' on-click='blacklist-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
-        <button id='play-button' text='~play-button-text' interactable='~play-button-enable' hover-hint='Download and scroll to the currently selected request.' on-click='play-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
+        <button text='~skip-button-text' interactable='~skip-button-enable' hover-hint='从队列中删除所选请求' on-click='skip-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
+        <button text='~blacklist-button-text' interactable='~blacklist-button-enable' hover-hint='屏蔽所选的歌曲' on-click='blacklist-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
+        <button id='play-button' text='~play-button-text' interactable='~play-button-enable' hover-hint='下载并跳转到当前所选歌曲' on-click='play-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
       </vertical>
-      <button id='queue-button' text='~queue-button-text' hover-hint='Open/Close the queue.' on-click='queue-click' min-width='32' active='~is-active-button'></button>
+      <button id='queue-button' text='~queue-button-text' hover-hint='打开/关闭队列' on-click='queue-click' min-width='32' active='~is-active-button'></button>
     </vertical>
   </horizontal>
   <modal id="modal" show-event='open-modal' hide-event='close-modal' clickerino-offerino-closerino="false" size-delta-x='90' size-delta-y='45' move-to-center='true'>
@@ -40,8 +40,8 @@
     <vertical child-align='LowerCenter' horizontal-fit='Unconstrained' pad-top='10'>
       <text text='~message' align='Center' anchor-min-y='0'></text>
       <horizontal child-align='LowerCenter'>
-        <button on-click='yes-click' text='Yes'></button>
-        <button on-click='no-click' text='No'></button>
+        <button on-click='yes-click' text='确定'></button>
+        <button on-click='no-click' text='取消'></button>
       </horizontal>
     </vertical>
   </modal>

@@ -131,9 +131,9 @@ namespace SongRequestManagerV2
                                     try {
                                         this._coverImage.enabled = false;
                                         var dt = this._textFactory.Create().AddSong(this._song).AddUser(this._requestor); // Get basic fields
-                                        dt.Add("Status", this._status.ToString());
+                                        dt.Add("Status", RequestStatusToChinese(this._status));
                                         dt.Add("Info", (this._requestInfo != "") ? " / " + this._requestInfo : "");
-                                        dt.Add("RequestTime", this._requestTime.ToLocalTime().ToString("hh:mm"));
+                                        dt.Add("RequestTime", this._requestTime.ToLocalTime().ToString("HH:mm"));
                                         this.AuthorName = dt.Parse(StringFormat.QueueListRow2);
                                         this.Hint = dt.Parse(StringFormat.SongHintText);
 
@@ -209,6 +209,37 @@ namespace SongRequestManagerV2
         public class SongRequestFactory : PlaceholderFactory<SongRequest>
         {
 
+        }
+
+        public String RequestStatusToChinese(RequestStatus requestStatus)
+        {
+            string result = "";
+            switch (requestStatus)
+            {
+                case RequestStatus.Invalid:
+                    result = "非法";
+                    break;
+                case RequestStatus.Queued:
+                    result = "队列中";
+                    break;
+                case RequestStatus.Blacklisted:
+                    result = "已屏蔽";
+                    break;
+                case RequestStatus.Skipped:
+                    result = "已跳过";
+                    break;
+                case RequestStatus.Played:
+                    result = "已游玩";
+                    break;
+                case RequestStatus.Wrongsong:
+                    result = "错误歌曲";
+                    break;
+                case RequestStatus.SongSearch:
+                    result = "歌曲搜索";
+                    break;
+
+            }
+            return result;
         }
     }
 }

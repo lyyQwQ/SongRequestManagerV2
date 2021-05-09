@@ -149,7 +149,7 @@ namespace SongRequestManagerV2.Views
                 (screen.transform as RectTransform).anchoredPosition = new Vector2(70f, 80f);
                 screen.transform.localScale = Vector3.one * 2;
                 if (this._button == null) {
-                    this._button = UIHelper.CreateUIButton((screen.transform as RectTransform), "CancelButton", Vector2.zero, Vector2.zero, this.Action, "OPEN", null) as NoTransitionsButton;
+                    this._button = UIHelper.CreateUIButton((screen.transform as RectTransform), "CancelButton", Vector2.zero, Vector2.zero, this.Action, "打开", null) as NoTransitionsButton;
                 }
                 Logger.Debug($"screem size : {(screen.transform as RectTransform).sizeDelta}");
                 Logger.Debug($"button size : {(this._button.transform as RectTransform).sizeDelta}");
@@ -192,10 +192,10 @@ namespace SongRequestManagerV2.Views
                 var textMesh = externalComponents.components.FirstOrDefault(x => x as TextMeshProUGUI) as TextMeshProUGUI;
 
                 if (RequestBotConfig.Instance.RequestQueueOpen) {
-                    textMesh.text = "OPEN";
+                    textMesh.text = "打开";
                 }
                 else {
-                    textMesh.text = "CLOSE";
+                    textMesh.text = "关闭";
                 }
             }
             catch (Exception e) {

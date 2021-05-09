@@ -30,7 +30,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("play-button-text")]
         public string PlayButtonText
         {
-            get => this.playButtonName_ ?? "PLAY";
+            get => this.playButtonName_ ?? "开始";
 
             set => this.SetProperty(ref this.playButtonName_, value);
         }
@@ -41,7 +41,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("skip-button-text")]
         public string SkipButtonName
         {
-            get => this.skipButtonName_ ?? "SKIP";
+            get => this.skipButtonName_ ?? "跳过";
 
             set => this.SetProperty(ref this.skipButtonName_, value);
         }
@@ -52,7 +52,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("history-button-text")]
         public string HistoryButtonText
         {
-            get => this.historyButtonText_ ?? "HISTORY";
+            get => this.historyButtonText_ ?? "历史";
 
             set => this.SetProperty(ref this.historyButtonText_, value);
         }
@@ -63,7 +63,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("history-hint")]
         public string HistoryHoverHint
         {
-            get => this.historyHoverHint_ ?? "";
+            get => this.historyHoverHint_ ?? "这里会显示队列历史";
 
             set => this.SetProperty(ref this.historyHoverHint_, value);
         }
@@ -74,7 +74,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("queue-button-text")]
         public string QueueButtonText
         {
-            get => this.queueButtonText_ ?? "QUEUQ CLOSE";
+            get => this.queueButtonText_ ?? "关闭队列";
 
             set => this.SetProperty(ref this.queueButtonText_, value);
         }
@@ -85,7 +85,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("blacklist-button-text")]
         public string BlackListButtonText
         {
-            get => this.blacklistButtonText_ ?? "BLACK LIST";
+            get => this.blacklistButtonText_ ?? "屏蔽名单";
 
             set => this.SetProperty(ref this.blacklistButtonText_, value);
         }
@@ -99,7 +99,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("progress-text")]
         public string ProgressText
         {
-            get => this.progressText_ ?? "Download Progress - 0 %";
+            get => this.progressText_ ?? "下载进度 - 0 %";
 
             set => this.SetProperty(ref this.progressText_, value);
         }
@@ -250,7 +250,7 @@ namespace SongRequestManagerV2.Views
         #region // パブリックメソッド
         public void ChangeProgressText(double progress) => HMMainThreadDispatcher.instance?.Enqueue(() =>
                                                          {
-                                                             this.ProgressText = $"Download Progress - {progress * 100:0.00} %";
+                                                             this.ProgressText = $"下载进度 - {progress * 100:0.00} %";
                                                          });
         public void UpdateRequestUI(bool selectRowCallback = false)
         {
@@ -260,11 +260,11 @@ namespace SongRequestManagerV2.Views
             Dispatcher.RunOnMainThread(() =>
             {
                 try {
-                    this.QueueButtonText = RequestBotConfig.Instance.RequestQueueOpen ? "Queue Open" : "Queue Closed";
+                    this.QueueButtonText = RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用";
                     this._queueButton.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "Underline").color = RequestBotConfig.Instance.RequestQueueOpen ? Color.green : Color.red; ;
-                    this.HistoryHoverHint = this.IsShowHistory ? "Go back to your current song request queue." : "View the history of song requests from the current session.";
-                    this.HistoryButtonText = this.IsShowHistory ? "Requests" : "History";
-                    this.PlayButtonText = this.IsShowHistory ? "Replay" : "Play";
+                    this.HistoryHoverHint = this.IsShowHistory ? "返回当前点歌队列" : "查看本次点歌队列历史";
+                    this.HistoryButtonText = this.IsShowHistory ? "请求" : "历史";
+                    this.PlayButtonText = this.IsShowHistory ? "重新开始" : "开始";
                     this.PerformanceMode = RequestBotConfig.Instance.PerformanceMode;
                     this.RefreshSongQueueList(selectRowCallback);
                 }
@@ -403,13 +403,13 @@ namespace SongRequestManagerV2.Views
         [UIAction("#post-parse")]
         private void PostParse() =>
             // Set default RequestFlowCoordinator title
-            ChangeTitle?.Invoke(this.IsShowHistory ? "Song Request History" : "Song Request Queue");
+            ChangeTitle?.Invoke(this.IsShowHistory ? "点歌历史" : "点歌队列");
         [UIAction("history-click")]
         private void HistoryButtonClick()
         {
             this.IsShowHistory = !this.IsShowHistory;
 
-            ChangeTitle?.Invoke(this.IsShowHistory ? "Song Request History" : "Song Request Queue");
+            ChangeTitle?.Invoke(this.IsShowHistory ? "点歌历史" : "点歌队列");
         }
         [UIAction("skip-click")]
         private void SkipButtonClick()
@@ -430,7 +430,7 @@ namespace SongRequestManagerV2.Views
                 this.confirmDialogActive = true;
 
                 // show dialog
-                this.ShowDialog("Skip Song Warning", $"Skipping {song["songName"].Value} by {song["authorName"].Value}\r\nDo you want to continue?", _onConfirm, () => { this.confirmDialogActive = false; });
+                this.ShowDialog("跳过歌曲提示", $"跳过 {song["authorName"].Value}的{song["songName"].Value} \r\n确定要继续?", _onConfirm, () => { this.confirmDialogActive = false; });
             }
         }
         [UIAction("blacklist-click")]
@@ -450,7 +450,7 @@ namespace SongRequestManagerV2.Views
                 this.confirmDialogActive = true;
 
                 // show dialog
-                this.ShowDialog("Blacklist Song Warning", $"Blacklisting {song["songName"].Value} by {song["authorName"].Value}\r\nDo you want to continue?", _onConfirm, () => { this.confirmDialogActive = false; });
+                this.ShowDialog("屏蔽歌曲提示", $"屏蔽 {song["authorName"].Value}的{song["songName"].Value}\r\n确定要继续?", _onConfirm, () => { this.confirmDialogActive = false; });
             }
         }
         [UIAction("play-click")]
@@ -470,8 +470,8 @@ namespace SongRequestManagerV2.Views
         {
             RequestBotConfig.Instance.RequestQueueOpen = !RequestBotConfig.Instance.RequestQueueOpen;
             RequestBotConfig.Instance.Save();
-            this._bot.WriteQueueStatusToFile(RequestBotConfig.Instance.RequestQueueOpen ? "Queue is open." : "Queue is closed.");
-            this._chatManager.QueueChatMessage(RequestBotConfig.Instance.RequestQueueOpen ? "Queue is open." : "Queue is closed.");
+            this._bot.WriteQueueStatusToFile(RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用");
+            this._chatManager.QueueChatMessage(RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用");
             this.UpdateRequestUI();
         }
 
@@ -613,7 +613,7 @@ namespace SongRequestManagerV2.Views
                 try {
                     #region History button
                     // History button
-                    this.HistoryButtonText = "HISTORY";
+                    this.HistoryButtonText = "历史";
                     #endregion
                 }
                 catch (Exception e) {
@@ -622,7 +622,7 @@ namespace SongRequestManagerV2.Views
                 try {
                     #region Blacklist button
                     // Blacklist button
-                    this.BlackListButtonText = "Blacklist";
+                    this.BlackListButtonText = "屏蔽列表";
                     #endregion
                 }
                 catch (Exception e) {
@@ -630,7 +630,7 @@ namespace SongRequestManagerV2.Views
                 }
                 try {
                     #region Skip button
-                    this.SkipButtonName = "Skip";
+                    this.SkipButtonName = "跳过";
                     #endregion
                 }
                 catch (Exception e) {
@@ -639,7 +639,7 @@ namespace SongRequestManagerV2.Views
                 try {
                     #region Play button
                     // Play button
-                    this.PlayButtonText = "Play";
+                    this.PlayButtonText = "开始";
                     #endregion
                 }
                 catch (Exception e) {
@@ -648,7 +648,7 @@ namespace SongRequestManagerV2.Views
                 try {
                     #region Queue button
                     // Queue button
-                    this.QueueButtonText = RequestBotConfig.Instance.RequestQueueOpen ? "Queue Open" : "Queue Closed";
+                    this.QueueButtonText = RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用";
                     #endregion
                 }
                 catch (Exception e) {

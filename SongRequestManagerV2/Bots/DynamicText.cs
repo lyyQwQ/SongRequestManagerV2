@@ -162,8 +162,8 @@ namespace SongRequestManagerV2.Bots
 
                 var now = DateTime.Now; //"MM/dd/yyyy hh:mm:ss.fffffff";         
                 dt.Add("SRM", "Song Request Manager");
-                dt.Add("Time", now.ToString("hh:mm"));
-                dt.Add("LongTime", now.ToString("hh:mm:ss"));
+                dt.Add("Time", now.ToString("HH:mm"));
+                dt.Add("LongTime", now.ToString("HH:mm:ss"));
                 dt.Add("Date", now.ToString("yyyy/MM/dd"));
                 dt.Add("LF", "\n"); // Allow carriage return
                 return dt;
