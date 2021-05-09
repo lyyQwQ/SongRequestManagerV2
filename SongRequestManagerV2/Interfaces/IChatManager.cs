@@ -1,6 +1,8 @@
 ﻿using ChatCore.Interfaces;
 using ChatCore.Services;
+using ChatCore.Services.BiliBili;
 using ChatCore.Services.Twitch;
+using ChatCore.Services.BiliBili;
 using System.Collections.Concurrent;
 using Zenject;
 
@@ -13,6 +15,7 @@ namespace SongRequestManagerV2.Interfaces
         ConcurrentQueue<string> SendMessageQueue { get; }
         ChatServiceMultiplexer MultiplexerInstance { get; }
         TwitchService TwitchService { get; }
+        BiliBiliService BiliBiliService { get; }
         void QueueChatMessage(string message);
     }
 }

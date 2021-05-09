@@ -2,6 +2,7 @@
 using ChatCore.Interfaces;
 using ChatCore.Services;
 using ChatCore.Services.Twitch;
+using ChatCore.Services.BiliBili;
 using SongRequestManagerV2.Interfaces;
 using System;
 using System.Collections.Concurrent;
@@ -15,6 +16,7 @@ namespace SongRequestManagerV2.Utils
         public ChatCoreInstance CoreInstance { get; private set; }
         public ChatServiceMultiplexer MultiplexerInstance { get; private set; }
         public TwitchService TwitchService { get; private set; }
+        public BiliBiliService BiliBiliService { get; private set; }
 
         public ConcurrentQueue<IChatMessage> RecieveChatMessage { get; } = new ConcurrentQueue<IChatMessage>();
         public ConcurrentQueue<RequestInfo> RequestInfos { get; } = new ConcurrentQueue<RequestInfo>();
@@ -30,6 +32,7 @@ namespace SongRequestManagerV2.Utils
             this.MultiplexerInstance.OnJoinChannel -= this.MultiplexerInstance_OnJoinChannel;
             this.MultiplexerInstance.OnJoinChannel += this.MultiplexerInstance_OnJoinChannel;
             this.TwitchService = this.MultiplexerInstance.GetTwitchService();
+            this.BiliBiliService = this.MultiplexerInstance.GetBiliBiliService();
             this.MultiplexerInstance.OnTextMessageReceived += this.MultiplexerInstance_OnTextMessageReceived;
         }
 

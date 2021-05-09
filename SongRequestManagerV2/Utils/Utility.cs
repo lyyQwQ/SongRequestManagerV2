@@ -1,5 +1,6 @@
 ﻿using ChatCore.Interfaces;
 using ChatCore.Models.Twitch;
+using ChatCore.Models.BiliBili;
 using ChatCore.Utilities;
 using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.Statics;
@@ -35,8 +36,8 @@ namespace SongRequestManagerV2.Utils
             if (user.IsModerator & RequestBotConfig.Instance.ModFullRights) return true;
             if (user.IsBroadcaster & botcmd.Flags.HasFlag(CmdFlags.Broadcaster)) return true;
             if (user.IsModerator & botcmd.Flags.HasFlag(CmdFlags.Mod)) return true;
-            if (user is TwitchUser twitchUser && twitchUser.IsSubscriber & botcmd.Flags.HasFlag(CmdFlags.Sub)) return true;
-            if (user is TwitchUser twitchUser1 && twitchUser1.IsVip & botcmd.Flags.HasFlag(CmdFlags.VIP)) return true;
+            if ((user is TwitchUser twitchUser && twitchUser.IsSubscriber & botcmd.Flags.HasFlag(CmdFlags.Sub)) || (user is BiliBiliChatUser biliBiliChatUser && biliBiliChatUser.IsFan & botcmd.Flags.HasFlag(CmdFlags.Sub))) return true;
+            if ((user is TwitchUser twitchUser1 && twitchUser1.IsVip & botcmd.Flags.HasFlag(CmdFlags.VIP)) || (user is BiliBiliChatUser biliBiliChatUser1 && biliBiliChatUser1.GuardLevel > 0 & botcmd.Flags.HasFlag(CmdFlags.VIP))) return true;
             return false;
         }
 

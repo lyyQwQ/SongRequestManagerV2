@@ -1,5 +1,6 @@
 ﻿using ChatCore.Interfaces;
 using ChatCore.Models.Twitch;
+using ChatCore.Models.BiliBili;
 using ChatCore.Utilities;
 using IPA.Loader;
 using SongRequestManagerV2.Bases;
@@ -254,16 +255,19 @@ namespace SongRequestManagerV2.Bots
 
         internal void RecievedMessages(IChatMessage msg)
         {
-            Logger.Debug($"Received Message : {msg.Message}");
+            if (msg.Sender.GetType().Name == "TwitchUser" || ( msg.Sender.GetType().Name == "BiliBiliChatUser" && !msg.IsSystemMessage && !msg.Message.StartsWith("【") && !msg.Message.StartsWith("投喂")))
+            {
+                Logger.Debug($"Received Message : {msg.Message}");
 #if DEBUG
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
 #endif
-            this.Parse(msg.Sender, msg.Message.Replace("！", "!"));
+                this.Parse(msg.Sender, msg.Message.Replace("！", "!"));
 #if DEBUG
-            stopwatch.Stop();
-            Logger.Debug($"{stopwatch.ElapsedMilliseconds} ms");
+                stopwatch.Stop();
+                Logger.Debug($"{stopwatch.ElapsedMilliseconds} ms");
 #endif
+            }
         }
 
         internal void OnConfigChangedEvent(RequestBotConfig config)
@@ -472,6 +476,14 @@ namespace SongRequestManagerV2.Bots
                         this.ChatManager.TwitchService.SendTextMessage($"{message}", channel.Value);
                     }
                 }
+                if (this.ChatManager.BiliBiliService != null)
+                {
+                    //TODO: Bilibili Cookies
+                    /*foreach (var channel in this.ChatManager.TwitchService.Channels)
+                    {
+                        this.ChatManager.TwitchService.SendTextMessage($"{message}", channel.Value);
+                    }*/
+                }
                 Logger.Debug("Finish send chat message");
             }
             catch (Exception e) {
@@ -600,6 +612,9 @@ namespace SongRequestManagerV2.Bots
                     //ToDo: Support Mixer whisper
                     if (requestor is TwitchUser) {
                         msg.Header($"@{requestor.UserName}, please choose: ");
+                    } else if (requestor is BiliBiliChatUser)
+                    {
+                        msg.Header($"@{requestor.UserName}, 请选择: ");
                     }
                     else {
                         msg.Header($"@{requestor.UserName}, please choose: ");
@@ -827,6 +842,11 @@ namespace SongRequestManagerV2.Bots
                     if (twitchUser.IsSubscriber) limit = Math.Max(limit, RequestBotConfig.Instance.SubRequestLimit);
                     if (state._user.IsModerator) limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
                     if (twitchUser.IsVip) limit += RequestBotConfig.Instance.VipBonusRequests; // Current idea is to give VIP's a bonus over their base subscription class, you can set this to 0 if you like
+                } else if (state._user is BiliBiliChatUser biliBiliChatUser)
+                {
+                    if (biliBiliChatUser.IsFan) limit = Math.Max(limit, RequestBotConfig.Instance.SubRequestLimit);
+                    if (state._user.IsModerator) limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
+                    if (biliBiliChatUser.GuardLevel > 0) limit += RequestBotConfig.Instance.VipBonusRequests; // Current idea is to give VIP's a bonus over their base subscription class, you can set this to 0 if you like
                 }
                 else {
                     if (state._user.IsModerator) limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);

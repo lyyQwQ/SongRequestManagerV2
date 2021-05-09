@@ -2,6 +2,7 @@
 using ChatCore.Interfaces;
 using ChatCore.Models;
 using ChatCore.Models.Twitch;
+using ChatCore.Models.BiliBili;
 using ChatCore.Utilities;
 using HMUI;
 using SongCore;
