@@ -420,7 +420,7 @@ namespace SongRequestManagerV2.Bots
                 }
                 catch (Exception ex) {
                     Logger.Error(ex);
-                    this.ChatManager.QueueChatMessage("Failed to clear played file");
+                    this.ChatManager.QueueChatMessage("无法清空已游玩列表文件");
 
                 }
                 this._requestManager.ReadRequest(); // Might added the timespan check for this too. To be decided later.
@@ -758,7 +758,7 @@ namespace SongRequestManagerV2.Bots
             // Add the song to the blacklist
             this.ListCollectionManager.Add(banlist, request._song["id"].Value);
 
-            this.ChatManager.QueueChatMessage($"{request._song["songName"].Value} by {request._song["authorName"].Value} ({request._song["id"].Value}) added to the blacklist.");
+            this.ChatManager.QueueChatMessage($"请求歌曲 {request._song["songName"].Value} (作者 {request._song["authorName"].Value} id {request._song["id"].Value}) 已添加到屏蔽列表");
 
             if (!fromHistory) {
                 if (skip)
@@ -979,7 +979,7 @@ namespace SongRequestManagerV2.Bots
             if (requestor.IsBroadcaster || requestor.IsModerator)
                 return true;
             if (message != "")
-                this.ChatManager.QueueChatMessage($"{message} is moderator only.");
+                this.ChatManager.QueueChatMessage($"{message} 仅限房管");
             return false;
         }
 
@@ -1003,31 +1003,31 @@ namespace SongRequestManagerV2.Bots
         {
             var songid = song["id"].Value;
             if (filter.HasFlag(SongFilter.Queue) && RequestManager.RequestSongs.OfType<SongRequest>().Any(req => req._song["version"] == song["version"]))
-                return fast ? "X" : $"Request {song["songName"].Value} by {song["authorName"].Value} already exists in queue!";
+                return fast ? "X" : $"请求歌曲 {song["songName"].Value} (作者 {song["authorName"].Value}) 已在队列!";
 
             if (filter.HasFlag(SongFilter.Blacklist) && this.ListCollectionManager.Contains(banlist, songid))
-                return fast ? "X" : $"{song["songName"].Value} by {song["authorName"].Value} ({song["version"].Value}) is banned!";
+                return fast ? "X" : $"请求歌曲 {song["songName"].Value} (作者 {song["authorName"].Value} 版本{song["version"].Value}) 被禁用!";
 
             if (filter.HasFlag(SongFilter.Mapper) && this.Mapperfiltered(song, this._mapperWhitelist))
-                return fast ? "X" : $"{song["songName"].Value} by {song["authorName"].Value} does not have a permitted mapper!";
+                return fast ? "X" : $"请求歌曲 {song["songName"].Value} (作者 {song["authorName"].Value}) 没有匹配谱师!";
 
             if (filter.HasFlag(SongFilter.Duplicate) && this.ListCollectionManager.Contains(duplicatelist, songid))
-                return fast ? "X" : $"{song["songName"].Value} by  {song["authorName"].Value} already requested this session!";
+                return fast ? "X" : $"请求歌曲 {song["songName"].Value} (作者 {song["authorName"].Value}) 已经请求过!";
 
             if (this.ListCollectionManager.Contains(_whitelist, songid))
                 return "";
 
             if (filter.HasFlag(SongFilter.Duration) && song["songduration"].AsFloat > RequestBotConfig.Instance.MaximumSongLength * 60)
-                return fast ? "X" : $"{song["songName"].Value} ({song["songlength"].Value}) by {song["authorName"].Value} ({song["version"].Value}) is too long!";
+                return fast ? "X" : $"请求歌曲 {song["songName"].Value} (时长 {song["songlength"].Value} 作者 {song["authorName"].Value} 版本{song["version"].Value}) 太长了!";
 
             if (filter.HasFlag(SongFilter.NJS) && song["njs"].AsInt < RequestBotConfig.Instance.MinimumNJS)
-                return fast ? "X" : $"{song["songName"].Value} ({song["songlength"].Value}) by {song["authorName"].Value} ({song["version"].Value}) NJS ({song["njs"].Value}) is too low!";
+                return fast ? "X" : $"请求歌曲 {song["songName"].Value} (时长 {song["songlength"].Value} 作者 {song["authorName"].Value} {song["version"].Value}) NJS ({song["njs"].Value}) 太低了!";
 
             if (filter.HasFlag(SongFilter.Remap) && songremap.ContainsKey(songid))
-                return fast ? "X" : $"no permitted results found!";
+                return fast ? "X" : $"没有可用结果!";
 
             if (filter.HasFlag(SongFilter.Rating) && song["rating"].AsFloat < RequestBotConfig.Instance.LowestAllowedRating && song["rating"] != 0)
-                return fast ? "X" : $"{song["songName"].Value} by {song["authorName"].Value} is below {RequestBotConfig.Instance.LowestAllowedRating}% rating!";
+                return fast ? "X" : $"请求歌曲 {song["songName"].Value} (作者 {song["authorName"].Value}) 低于预设 {RequestBotConfig.Instance.LowestAllowedRating}% 评分!";
 
             return "";
         }
@@ -1046,7 +1046,7 @@ namespace SongRequestManagerV2.Bots
             foreach (SongRequest req in RequestManager.RequestSongs) {
                 var song = req._song;
                 if (song[matchby].Value == request)
-                    return fast ? "X" : $"Request {song["songName"].Value} by {song["authorName"].Value} ({song["version"].Value}) already exists in queue!";
+                    return fast ? "X" : $"请求歌曲 {song["songName"].Value} (作者 {song["authorName"].Value} 版本 {song["version"].Value}) 已在队列!";
             }
             return ""; // Empty string: The request is not in the RequestManager.RequestSongs
         }
@@ -1057,7 +1057,7 @@ namespace SongRequestManagerV2.Bots
         public string ClearDuplicateList(ParseState state)
         {
             if (!state._botcmd.Flags.HasFlag(CmdFlags.SilentResult))
-                this.ChatManager.QueueChatMessage("Session duplicate list is now clear.");
+                this.ChatManager.QueueChatMessage("防重复列表已清空");
             this.ListCollectionManager.ClearList(duplicatelist);
             return success;
         }
@@ -1153,7 +1153,7 @@ namespace SongRequestManagerV2.Bots
             try {
                 var count = 0;
                 if (RequestManager.RequestSongs.Count == 0) {
-                    this.ChatManager.QueueChatMessage("Queue is empty  .");
+                    this.ChatManager.QueueChatMessage("队列空");
                     return;
                 }
 
@@ -1224,7 +1224,7 @@ namespace SongRequestManagerV2.Bots
                     }
 
                     if (dequeueSong) {
-                        this.ChatManager.QueueChatMessage($"{song._song["songName"].Value} ({song._song["version"].Value}) removed.");
+                        this.ChatManager.QueueChatMessage($"请求歌曲 {song._song["songName"].Value} (版本 {song._song["version"].Value}) 已删除");
                         this.Skip(song);
                         return success;
                     }
@@ -1658,7 +1658,7 @@ namespace SongRequestManagerV2.Bots
                     // And write a summary to file
                     this.WriteQueueSummaryToFile();
 
-                    this.ChatManager.QueueChatMessage($"{song["songName"].Value} ({song["version"].Value}) {(top ? "promoted" : "demoted")}.");
+                    this.ChatManager.QueueChatMessage($"{song["songName"].Value} ({song["version"].Value}) {(top ? "提升" : "下沉")}.");
                     return;
                 }
             }
@@ -1815,14 +1815,14 @@ namespace SongRequestManagerV2.Bots
             var parts = request.Split(',', ' ');
 
             if (parts.Length < 2) {
-                this.ChatManager.QueueChatMessage("usage: !remap <songid>,<songid>, omit the <>'s");
+                this.ChatManager.QueueChatMessage("用法: !remap <歌曲id>,<歌曲id> 不包含<>");
                 return;
             }
 
             if (songremap.ContainsKey(parts[0]))
                 songremap.Remove(parts[0]);
             songremap.Add(parts[0], parts[1]);
-            this.ChatManager.QueueChatMessage($"Song {parts[0]} remapped to {parts[1]}");
+            this.ChatManager.QueueChatMessage($"歌曲 {parts[0]} 重定向到 {parts[1]}");
             this.WriteRemapList();
         }
 
@@ -1830,7 +1830,7 @@ namespace SongRequestManagerV2.Bots
         {
 
             if (songremap.ContainsKey(request)) {
-                this.ChatManager.QueueChatMessage($"Remap entry {request} removed.");
+                this.ChatManager.QueueChatMessage($"重定向 {request} 已移除.");
                 songremap.Remove(request);
             }
             this.WriteRemapList();
@@ -1887,7 +1887,7 @@ namespace SongRequestManagerV2.Bots
             for (var i = RequestManager.RequestSongs.Count - 1; i >= 0; i--) {
                 if (RequestManager.RequestSongs.ToArray()[i] is SongRequest song) {
                     if (song._requestor.Id == requestor.Id) {
-                        this.ChatManager.QueueChatMessage($"{song._song["songName"].Value} ({song._song["version"].Value}) removed.");
+                        this.ChatManager.QueueChatMessage($"请求歌曲 {song._song["songName"].Value} (版本 {song._song["version"].Value}) 已删除");
 
                         this.ListCollectionManager.Remove(duplicatelist, song._song["id"].Value);
                         this.Skip(song, RequestStatus.Wrongsong);
@@ -1935,7 +1935,7 @@ namespace SongRequestManagerV2.Bots
         public string QueueStatus(ParseState state)
         {
             var queuestate = RequestBotConfig.Instance.RequestQueueOpen ? "队列已开启" : "队列已关闭";
-            this.ChatManager.QueueChatMessage($"{queuestate} There are {RequestManager.RequestSongs.Count} maps ({this.Queueduration()}) in the queue.");
+            this.ChatManager.QueueChatMessage($"{queuestate} 现在队列里有 {RequestManager.RequestSongs.Count} 首 ({this.Queueduration()}) 歌曲");
             return success;
         }
         #region DynamicText class and support functions.
@@ -1950,7 +1950,7 @@ namespace SongRequestManagerV2.Bots
         {
             var msg = this._messageFactroy.Create();
             msg.Header("Loaded lists: ");
-            foreach (var entry in this.ListCollectionManager.ListCollection) msg.Add($"{entry.Key} ({entry.Value.Count()})", ", ");
+            foreach (var entry in this.ListCollectionManager.ListCollection)
                 msg.Add($"{entry.Key} ({entry.Value.Count()})", ", ");
             msg.End("...", "没有加载列表");
         }
@@ -1965,7 +1965,7 @@ namespace SongRequestManagerV2.Bots
         {
             var parts = request.Split(new char[] { ' ', ',' }, 2);
             if (parts.Length < 2) {
-                this.ChatManager.QueueChatMessage("Usage text... use the official help method");
+                this.ChatManager.QueueChatMessage("用法请见官方帮助");
                 return;
             }
 
@@ -1988,10 +1988,10 @@ namespace SongRequestManagerV2.Bots
                 var msg = this._messageFactroy.Create();
                 foreach (var entry in list.list)
                     msg.Add(entry, ", ");
-                msg.End("...", $"{request} is empty");
+                msg.End("...", $"{request} 为空");
             }
             catch {
-                this.ChatManager.QueueChatMessage($"{request} not found.");
+                this.ChatManager.QueueChatMessage($"{request} 无法找到");
             }
         }
 
@@ -2000,7 +2000,7 @@ namespace SongRequestManagerV2.Bots
             var parts = request.Split(new char[] { ' ', ',' }, 2);
             if (parts.Length < 2) {
                 //     NewCommands[Addtolist].ShortHelp();
-                this.ChatManager.QueueChatMessage("Usage text... use the official help method");
+                this.ChatManager.QueueChatMessage("用法请见官方帮助");
                 return;
             }
 
@@ -2138,7 +2138,7 @@ namespace SongRequestManagerV2.Bots
         {
             var errormsg = this.Backup();
             if (errormsg == "")
-                state.Msg("SRManager files backed up.");
+                state.Msg("点歌管理器文件已备份");
             return errormsg;
         }
         public string Backup()

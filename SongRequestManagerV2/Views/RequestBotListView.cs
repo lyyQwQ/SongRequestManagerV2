@@ -260,11 +260,11 @@ namespace SongRequestManagerV2.Views
             Dispatcher.RunOnMainThread(() =>
             {
                 try {
-                    this.QueueButtonText = RequestBotConfig.Instance.RequestQueueOpen ? "Queue Open" : "Queue Closed";
+                    this.QueueButtonText = RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用";
                     this._queueButton.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "Underline").color = RequestBotConfig.Instance.RequestQueueOpen ? Color.green : Color.red;
-                    this.HistoryHoverHint = this.IsShowHistory ? "Go back to your current song request queue." : "View the history of song requests from the current session.";
-                    this.HistoryButtonText = this.IsShowHistory ? "Requests" : "History";
-                    this.PlayButtonText = this.IsShowHistory ? "Replay" : "Play";
+                    this.HistoryHoverHint = this.IsShowHistory ? "返回当前点歌队列" : "查看本次点歌队列历史";
+                    this.HistoryButtonText = this.IsShowHistory ? "请求" : "历史";
+                    this.PlayButtonText = this.IsShowHistory ? "重新开始" : "开始";
                     this.PerformanceMode = RequestBotConfig.Instance.PerformanceMode;
                     this.RefreshSongQueueList(selectRowCallback);
                 }

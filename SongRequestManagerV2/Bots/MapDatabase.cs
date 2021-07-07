@@ -284,7 +284,7 @@ namespace SongRequestManagerV2.Bots
             return Task.Run(() =>
             {
                 if (songid == "")
-                    this._chatManager.QueueChatMessage($"Starting song indexing {folder}");
+                    this._chatManager.QueueChatMessage($"开始索引歌曲 {folder}");
 
                 var StarTime = DateTime.UtcNow;
 
@@ -376,7 +376,7 @@ namespace SongRequestManagerV2.Bots
                 }
                 var duration = DateTime.UtcNow - StarTime;
                 if (songid == "")
-                    this._chatManager.QueueChatMessage($"Song indexing done. ({duration.TotalSeconds} secs.");
+                    this._chatManager.QueueChatMessage($"歌曲索引完成 ({duration.TotalSeconds} secs.");
 
                 DatabaseImported = true;
                 DatabaseLoading = false;
