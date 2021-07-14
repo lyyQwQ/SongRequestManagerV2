@@ -890,6 +890,10 @@ namespace SongRequestManagerV2.Bots
             if (this.ChatManager.TwitchService?.LoggedInUser != null) {
                 return this.ChatManager.TwitchService?.LoggedInUser;
             }
+            else if (this.ChatManager.BiliBiliService?.LoggedInUser != null)
+            {
+                return this.ChatManager.BiliBiliService?.LoggedInUser;
+            }
             else {
                 var obj = new
                 {

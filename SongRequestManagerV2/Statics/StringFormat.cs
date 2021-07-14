@@ -4,7 +4,7 @@ namespace SongRequestManagerV2.Statics
 {
     public class StringFormat
     {
-        public static StringBuilder AddSongToQueueText { get; } = new StringBuilder("点歌请求 %songName% %songSubName%/%authorName% %Rating% (%version%) 已添加到队列");
+        public static StringBuilder AddSongToQueueText { get; } = new StringBuilder("歌曲 %songName% - %songSubName% (作者 %authorName% 评分 %Rating% 版本 %version%) 已添加到队列");
         public static StringBuilder LookupSongDetail { get; } = new StringBuilder("%songName% %songSubName%/%authorName% %Rating% (%version%)");
         public static StringBuilder BsrSongDetail { get; } = new StringBuilder("%songName% %songSubName%/%authorName% %Rating% (%version%)");
         public static StringBuilder LinkSonglink { get; } = new StringBuilder("%songName% %songSubName%/%authorName% %Rating% (%version%) %BeatsaverLink%");

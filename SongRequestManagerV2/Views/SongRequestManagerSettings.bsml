@@ -1,7 +1,7 @@
 ﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
   <settings-container>
     <bool-setting text='自动选择第一首歌曲' value='autopick-first-song' bind-value='true' hover-hint='自动选取搜索列表中的第一首歌曲'></bool-setting>
-    <bool-setting text='Clear Nofail' value='clear-nofail' bind-value='true' hover-hint='Endable clear nofail on select request song.'></bool-setting>
+    <bool-setting text='取消不死模式(No Fail)' value='clear-nofail' bind-value='true' hover-hint='在选中请求歌曲时自动取消不死模式(No Fail)'></bool-setting>
     <slider-setting text='最低评分' min='0' max='100' increment='.5' value='lowest-allowed-rating' integer-only='false' hover-hint='最低允许的评分' ></slider-setting>
     <slider-setting text='最大歌曲长度' min='0' max='999' increment='1' value='maximum-song-length' integer-only='true' hover-hint='最大允许歌曲长度(分钟)' ></slider-setting>
     <slider-setting text='最低谱速(NJS)' min='0' max='50' increment='1' value='minimum-njs' integer-only='true' hover-hint='谱面谱速(NJS)必须高于该值' ></slider-setting>
