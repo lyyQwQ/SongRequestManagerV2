@@ -561,7 +561,7 @@ namespace SongRequestManagerV2.Bots
                     // Remap song id if entry present. This is one time, and not correct as a result. No recursion right now, could be confusing to the end user.
                     if (songremap.ContainsKey(id) && !requestInfo.Flags.HasFlag(CmdFlags.NoFilter)) {
                         request = songremap[id];
-                        this.ChatManager.QueueChatMessage($"重定向 {requestInfo.request} 请求到 {request}");
+                        this.ChatManager.QueueChatMessage($"重定向 {requestInfo.Request} 请求到 {request}");
                     }
 
                     var requestcheckmessage = this.IsRequestInQueue(this.Normalize.RemoveSymbols(request, this.Normalize._SymbolsNoDash), requestInfo.IsPryorityKey);               // Check if requested ID is in Queue  
@@ -786,7 +786,7 @@ namespace SongRequestManagerV2.Bots
             // Add the song to the blacklist
             this.ListCollectionManager.Add(banlist, request.SongNode["id"].Value);
 
-            this.ChatManager.QueueChatMessage($"请求歌曲 {request._song["songName"].Value} (作者 {request._song["authorName"].Value} id {request._song["id"].Value}) 已添加到屏蔽列表");
+            this.ChatManager.QueueChatMessage($"请求歌曲 {request.SongNode["songName"].Value} (作者 {request.SongNode["authorName"].Value} id {request.SongNode["id"].Value}) 已添加到屏蔽列表");
 
             if (!fromHistory) {
                 if (skip)
@@ -862,11 +862,11 @@ namespace SongRequestManagerV2.Bots
                         limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
                     if (twitchUser.IsVip)
                         limit += RequestBotConfig.Instance.VipBonusRequests; // Current idea is to give VIP's a bonus over their base subscription class, you can set this to 0 if you like
-                } else if (state._user is BiliBiliChatUser biliBiliChatUser)
+                } else if (state.User is BiliBiliChatUser biliBiliChatUser)
                 {
                     if (biliBiliChatUser.IsFan)
                         limit = Math.Max(limit, RequestBotConfig.Instance.SubRequestLimit);
-                    if (state._user.IsModerator)
+                    if (state.User.IsModerator)
                         limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
                     if (biliBiliChatUser.GuardLevel > 0)
                         limit += RequestBotConfig.Instance.VipBonusRequests; // Current idea is to give VIP's a bonus over their base subscription class, you can set this to 0 if you like
@@ -892,8 +892,8 @@ namespace SongRequestManagerV2.Bots
 
                 var newRequest = new RequestInfo(state.User, state.Parameter, DateTime.UtcNow, _digitRegex.IsMatch(testrequest) || _beatSaverRegex.IsMatch(testrequest), state, state.Flags, state.Info, pryorityKey);
 
-                if (!newRequest.isBeatSaverId && state._parameter.Length < 2) {
-                    this.ChatManager.QueueChatMessage($"请求 \"{state._parameter}\" 太短了 - Beat Saver 搜索至少需要3个字符!");
+                if (!newRequest.IsBeatSaverId && state.Parameter.Length < 2) {
+                    this.ChatManager.QueueChatMessage($"请求 \"{state.Parameter}\" 太短了 - Beat Saver 搜索至少需要3个字符!");
                 }
 
                 if (!this.ChatManager.RequestInfos.Contains(newRequest)) {
@@ -1255,13 +1255,13 @@ namespace SongRequestManagerV2.Bots
                     }
 
                     if (dequeueSong) {
-                        this.ChatManager.QueueChatMessage($"{song._song["songName"].Value} ({song._song["id"].Value}) removed.");
+                        this.ChatManager.QueueChatMessage($"{song.SongNode["songName"].Value} ({song.SongNode["id"].Value}) 已移除");
                         this.Skip(song);
                         return success;
                     }
                 }
             }
-            return $"在队列找不到 {state._parameter}";
+            return $"在队列找不到 {state.Parameter}";
         }
         #endregion
 
@@ -1367,7 +1367,7 @@ namespace SongRequestManagerV2.Bots
             var parts = state.Parameter.Split(new char[] { ' ', ',' }, 2);
 
             if (!float.TryParse(parts[0], out var period))
-                return state.Error($"你必须在 {state._command} 后输入时间(分钟)");
+                return state.Error($"你必须在 {state.Command} 后输入时间(分钟)");
             if (period < 1)
                 return state.Error($"你必须指定一个大于1分钟的时间段");
             Events.Add(new BotEvent(TimeSpan.FromMinutes(period), parts[1], true, (s, e) => this.ScheduledCommand(s, e)));
@@ -1379,7 +1379,7 @@ namespace SongRequestManagerV2.Bots
             var parts = state.Parameter.Split(new char[] { ' ', ',' }, 2);
 
             if (!float.TryParse(parts[0], out var period))
-                return state.Error($"你必须在 {state._command} 后输入时间(分钟)");
+                return state.Error($"你必须在 {state.Command} 后输入时间(分钟)");
             if (period < 0)
                 return state.Error($"你必须指定一个大于0分钟的时间段");
             Events.Add(new BotEvent(TimeSpan.FromMinutes(period), parts[1], false, (s, e) => this.ScheduledCommand(s, e)));
@@ -1603,8 +1603,8 @@ namespace SongRequestManagerV2.Bots
 
                 }
                 else {
-                    Logger.Debug($"Error {resp.ReasonPhrase} occured when trying to request song {state._parameter}!");
-                    errorMessage = $"BeatSaver ID \"{state._parameter}\" 不存在";
+                    Logger.Debug($"Error {resp.ReasonPhrase} occured when trying to request song {state.Parameter}!");
+                    errorMessage = $"BeatSaver ID \"{state.Parameter}\" 不存在";
                 }
             }
 
@@ -1625,7 +1625,7 @@ namespace SongRequestManagerV2.Bots
         public void QueueSong(ParseState state, JSONObject song)
         {
             var req = this._songRequestFactory.Create();
-            req.Init(song, state._user, DateTime.UtcNow, RequestStatus.SongSearch, "搜索结果");
+            req.Init(song, state.User, DateTime.UtcNow, RequestStatus.SongSearch, "搜索结果");
 
             if ((state.Flags.HasFlag(CmdFlags.MoveToTop))) {
                 var newList = (new List<object>() { req }).Union(RequestManager.RequestSongs.ToArray());
@@ -1918,7 +1918,7 @@ namespace SongRequestManagerV2.Bots
             for (var i = RequestManager.RequestSongs.Count - 1; i >= 0; i--) {
                 if (RequestManager.RequestSongs.ToArray()[i] is SongRequest song) {
                     if (song._requestor.Id == requestor.Id) {
-                        this.ChatManager.QueueChatMessage($"请求歌曲 {song._song["songName"].Value} (版本 {song._song["id"].Value}) 已删除");
+                        this.ChatManager.QueueChatMessage($"请求歌曲 {song.SongNode["songName"].Value} (版本 {song.SongNode["id"].Value}) 已删除");
 
                         this.ListCollectionManager.Remove(duplicatelist, song.SongNode["id"].Value);
                         this.Skip(song, RequestStatus.Wrongsong);
