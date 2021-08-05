@@ -1,5 +1,5 @@
 ﻿using ChatCore.Interfaces;
-using ChatCore.Utilities;
+using SongRequestManagerV2.SimpleJSON;
 using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.Statics;
 using SongRequestManagerV2.Utils;
@@ -39,7 +39,7 @@ namespace SongRequestManagerV2.Bots
         public DynamicText AddLinks()
         {
             if (this.AllowLinks) {
-                this.Add("beatsaver", "https://beatsaver.com");
+                this.Add("beatmaps.io", "https://beatmaps.io");
                 this.Add("beatsaber", "https://beatsaber.com");
                 this.Add("scoresaber", "https://scoresaber.com");
             }
