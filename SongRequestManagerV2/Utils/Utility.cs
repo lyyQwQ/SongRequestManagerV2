@@ -1,11 +1,13 @@
 ﻿using ChatCore.Interfaces;
 using ChatCore.Models.Twitch;
 using ChatCore.Models.BiliBili;
-using SongRequestManagerV2.SimpleJSON;
+using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
+using SongRequestManagerV2.SimpleJSON;
 using SongRequestManagerV2.Statics;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace SongRequestManagerV2.Utils
 {
@@ -56,9 +58,18 @@ namespace SongRequestManagerV2.Utils
         {
             if (!mode)
                 return "";
-
+            var version = song["versions"].AsArray.Children.FirstOrDefault(x => x["state"].Value == MapStatus.Published.ToString());
+            if (version == null) {
+                return "";
+            }
+            var maxstar = 0f;
+            foreach (var diff in version["diffs"].AsArray.Children) {
+                if (maxstar < diff["stars"].AsFloat) {
+                    maxstar = diff["stars"].AsFloat;
+                }
+            }
             var stars = "******";
-            var rating = song["rating"].AsFloat;
+            var rating = maxstar;
             if (rating < 0 || rating > 100)
                 rating = 0;
             var starrating = stars.Substring(0, (int)(rating / 17)); // 17 is used to produce a 5 star rating from 80ish to 100.
@@ -70,10 +81,10 @@ namespace SongRequestManagerV2.Utils
             if (!mode)
                 return "";
 
-            var rating = song["rating"].AsInt.ToString();
-            if (rating == "0")
+            var rating = song["stats"]["score"].AsFloat * 100f;
+            if (rating == 0)
                 return "";
-            return rating + '%';
+            return $"{rating:0.0}%";
         }
     }
 }

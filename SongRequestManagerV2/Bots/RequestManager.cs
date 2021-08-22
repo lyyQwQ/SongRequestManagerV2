@@ -1,6 +1,6 @@
-﻿using SongRequestManagerV2.SimpleJSON;
-using SongRequestManagerV2.Extentions;
+﻿using SongRequestManagerV2.Extentions;
 using SongRequestManagerV2.Interfaces;
+using SongRequestManagerV2.SimpleJSON;
 using SongRequestManagerV2.Utils;
 using System;
 using System.Collections.Concurrent;
@@ -76,7 +76,7 @@ namespace SongRequestManagerV2
             }
             catch (Exception e) {
                 Logger.Error(e);
-                this._chatManager.QueueChatMessage("There was an error reading the request queue.");
+                this._chatManager.QueueChatMessage("读取点歌队列出错");
             }
 
         }
@@ -94,7 +94,7 @@ namespace SongRequestManagerV2
                 }
             }
             catch {
-                this._chatManager.QueueChatMessage("There was an error reading the request history.");
+                this._chatManager.QueueChatMessage("读取点歌历史出错");
             }
 
         }

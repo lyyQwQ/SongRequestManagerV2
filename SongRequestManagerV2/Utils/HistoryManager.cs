@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SongRequestManagerV2.Models;
+using SongRequestManagerV2.Statics;
 using System;
 using System.IO;
 using System.Linq;
@@ -15,20 +16,29 @@ namespace SongRequestManagerV2.Utils
 
         internal static void AddSong(SongRequest song)
         {
+            // WIPはプレイリストにいれなくていいと思いました。
+            if (song.IsWIP) {
+                return;
+            }
+            // !oopsと検索系は除外
+            if ((song.Status & (RequestStatus.Wrongsong | RequestStatus.SongSearch)) != 0) {
+                return;
+            }
             var fileInfo = new FileInfo(PlaylistPath);
             if (!Directory.Exists(fileInfo.Directory.FullName)) {
                 Directory.CreateDirectory(fileInfo.Directory.FullName);
             }
-            var songObject = song.SongNode.AsObject;
+            var songObject = song.SongMetaData;
+            var version = song.SongVersion;
 
             var playlistsong = new PlaylistSongEntity()
             {
                 songName = songObject["songName"].Value,
-                levelAuthorName = songObject["levelAuthor"].Value,
-                key = songObject["id"].Value,
-                hash = songObject["hash"].Value.ToUpper(),
-                levelid = $"custom_level_{songObject["hash"].Value.ToUpper()}",
-                dateAdded = song._requestTime
+                levelAuthorName = songObject["levelAuthorName"].Value,
+                key = song.SongNode["id"].Value,
+                hash = version["hash"].Value.ToUpper(),
+                levelid = $"custom_level_{version["hash"].Value.ToUpper()}",
+                dateAdded = song.RequestTime.ToLocalTime()
             };
 
             var playlist = LoadPlaylist();
@@ -40,7 +50,7 @@ namespace SongRequestManagerV2.Utils
 
             try {
                 lock (lockObject) {
-                    playlist.songs = playlist.songs.OrderByDescending(x => x.dateAdded).ToList();
+                    playlist.songs = playlist.songs.OrderByDescending(x => x.dateAdded.ToLocalTime()).ToList();
                     File.WriteAllText(PlaylistPath, JsonConvert.SerializeObject(playlist, Formatting.Indented));
                 }
             }

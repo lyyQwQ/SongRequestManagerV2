@@ -1,6 +1,7 @@
-﻿using SongRequestManagerV2.SimpleJSON;
+﻿using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Extentions;
 using SongRequestManagerV2.Interfaces;
+using SongRequestManagerV2.SimpleJSON;
 using SongRequestManagerV2.Utils;
 using System;
 using System.Collections.Concurrent;
@@ -19,7 +20,7 @@ namespace SongRequestManagerV2.Bots
     {
         public static ConcurrentDictionary<string, SongMap> MapLibrary { get; } = new ConcurrentDictionary<string, SongMap>();
         public static ConcurrentDictionary<string, SongMap> LevelId { get; } = new ConcurrentDictionary<string, SongMap>();
-        public static ConcurrentDictionary<string, HashSet<int>> SearchDictionary { get; } = new ConcurrentDictionary<string, HashSet<int>>();
+        public static ConcurrentDictionary<string, HashSet<string>> SearchDictionary { get; } = new ConcurrentDictionary<string, HashSet<string>>();
         public static ConcurrentDictionary<string, float> PPMap { get; } = new ConcurrentDictionary<string, float>();
 
         private static int tempid = 100000; // For now, we use these for local ID less songs
@@ -47,13 +48,13 @@ namespace SongRequestManagerV2.Bots
             var result = new List<SongMap>();
 
             if (this.Bot.GetBeatSaverId(searchKey) != "") {
-                if (MapDatabase.MapLibrary.TryGetValue(this.normalize.RemoveSymbols(searchKey, this.normalize._SymbolsNoDash), out var song)) {
+                if (MapDatabase.MapLibrary.TryGetValue(this.normalize.RemoveSymbols(searchKey, this.normalize.SymbolsNoDash), out var song)) {
                     result.Add(song);
                     return result;
                 }
             }
 
-            var resultlist = new List<HashSet<int>>();
+            var resultlist = new List<HashSet<string>>();
 
             var SearchParts = this.normalize.Split(searchKey);
 
@@ -78,7 +79,7 @@ namespace SongRequestManagerV2.Bots
 
 
                 try {
-                    result.Add(MapDatabase.MapLibrary[map.ToString("x")]);
+                    result.Add(MapDatabase.MapLibrary[map]);
                 }
                 catch {
                     this._chatManager.QueueChatMessage($"map fail = {map}");
@@ -113,9 +114,9 @@ namespace SongRequestManagerV2.Bots
                 //JSONArray arr = new JSONArray();
                 var arr = new JSONObject();
                 foreach (var entry in MapLibrary)
-                    arr.Add(entry.Value.Song["id"], entry.Value.Song);
+                    arr.Add(entry.Value.SongObject["id"], entry.Value.SongObject);
                 File.WriteAllText(Path.Combine(Plugin.DataPath, "SongDatabase.dat"), arr.ToString());
-                this._chatManager.QueueChatMessage($"Saved Song Databse in  {(DateTime.Now - start).Seconds} secs.");
+                this._chatManager.QueueChatMessage($"保存歌曲数据库 耗时 {(DateTime.Now - start).Seconds} 秒");
             }
             catch (Exception ex) {
                 Logger.Error(ex);
@@ -147,7 +148,7 @@ namespace SongRequestManagerV2.Bots
 
                         json = 0; // BUG: This doesn't actually help. The problem is that the json object is still being referenced.
 
-                        this._chatManager.QueueChatMessage($"Finished reading {Count} in {(DateTime.Now - start).Seconds} secs.");
+                        this._chatManager.QueueChatMessage($"读取 {Count} 条目 耗时 {(DateTime.Now - start).Seconds} 秒");
                     }
                 }
             }
@@ -194,7 +195,7 @@ namespace SongRequestManagerV2.Bots
 
                 var startingmem = GC.GetTotalMemory(true);
 
-                this._chatManager.QueueChatMessage($"Starting to read archive.");
+                this._chatManager.QueueChatMessage($"开始读取存档");
                 var addcount = 0;
                 var StarTime = DateTime.Now;
 
@@ -234,7 +235,7 @@ namespace SongRequestManagerV2.Bots
 
                         hash = this.Bot.CreateMD5FromString(FileAccumulator.ToString());
 
-                        var levelId = string.Join("∎", hash, song["songName"].Value, song["songSubName"].Value, song["authorName"], song["beatsPerMinute"].AsFloat.ToString()) + "∎";
+                        var levelId = string.Join("∎", hash, song["songName"].Value, song["songSubName"].Value, song["songAuthorName"], song["beatsPerMinute"].AsFloat.ToString()) + "∎";
 
                         if (LevelId.ContainsKey(levelId)) {
 
@@ -245,7 +246,6 @@ namespace SongRequestManagerV2.Bots
                         addcount++;
 
                         song.Add("id", id);
-                        song.Add("version", version);
                         song.Add("hashMd5", hash);
 
                         this._songMapFactory.Create(song, levelId, f.FullName);
@@ -254,16 +254,16 @@ namespace SongRequestManagerV2.Bots
 
                     }
                     catch (Exception) {
-                        this._chatManager.QueueChatMessage($"Failed to process {f.FullName}");
+                        this._chatManager.QueueChatMessage($"处理 {f.FullName} 失败");
                         //Instance.QueueChatMessage(ex.ToString());
                     }
 
 
                 }
-                this._chatManager.QueueChatMessage($"Archive indexing done, {addcount} files added. ({(DateTime.Now - StarTime).TotalSeconds} secs.");
+                this._chatManager.QueueChatMessage($"存档索引完成, {addcount} 文件已添加。耗时 ({(DateTime.Now - StarTime).TotalSeconds} 秒");
                 GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
                 GC.Collect();
-                this._chatManager.QueueChatMessage($"hashentries: {SongMap.HashCount} memory: {(GC.GetTotalMemory(false) - startingmem) / 1048576} MB");
+                this._chatManager.QueueChatMessage($"哈希条目: {SongMap.HashCount} 内存占用: {(GC.GetTotalMemory(false) - startingmem) / 1048576} MB");
 
 
             });
@@ -297,8 +297,8 @@ namespace SongRequestManagerV2.Bots
                 var di = new DirectoryInfo(folder);
                 FullDirList(di, "*");
 
-                if (RequestBotConfig.Instance.additionalsongpath != "") {
-                    di = new DirectoryInfo(RequestBotConfig.Instance.additionalsongpath);
+                if (RequestBotConfig.Instance.AdditionalSongPath != "") {
+                    di = new DirectoryInfo(RequestBotConfig.Instance.AdditionalSongPath);
                     FullDirList(di, "*");
                 }
 
@@ -324,7 +324,7 @@ namespace SongRequestManagerV2.Bots
                 // This might need some optimization
 
 
-                this._chatManager.QueueChatMessage($"Processing {files.Count} maps. ");
+                this._chatManager.QueueChatMessage($"正在处理 {files.Count} 张谱面");
                 foreach (var item in files) {
 
                     //msg.Add(item.FullName,", ");
@@ -356,7 +356,7 @@ namespace SongRequestManagerV2.Bots
 
                         hash = this.Bot.CreateMD5FromString(FileAccumulator.ToString());
 
-                        var levelId = string.Join("∎", hash, song["songName"].Value, song["songSubName"].Value, song["authorName"], song["beatsPerMinute"].AsFloat.ToString()) + "∎";
+                        var levelId = string.Join("∎", hash, song["songName"].Value, song["songSubName"].Value, song["songAuthorName"], song["beatsPerMinute"].AsFloat.ToString()) + "∎";
 
                         if (LevelId.ContainsKey(levelId)) {
                             LevelId[levelId].Path = item.DirectoryName;
@@ -364,13 +364,12 @@ namespace SongRequestManagerV2.Bots
                         }
 
                         song.Add("id", id);
-                        song.Add("version", version);
                         song.Add("hashMd5", hash);
 
                         this._songMapFactory.Create(song, levelId, item.DirectoryName);
                     }
                     catch (Exception) {
-                        this._chatManager.QueueChatMessage($"Failed to process {item}.");
+                        this._chatManager.QueueChatMessage($"处理 {item} 失败");
                     }
 
                 }

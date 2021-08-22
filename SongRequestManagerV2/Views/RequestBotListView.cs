@@ -5,6 +5,7 @@ using IPA.Utilities;
 using SongCore;
 using SongRequestManagerV2.Bases;
 using SongRequestManagerV2.Bots;
+using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRUIControls;
 using Zenject;
-using KEYBOARD = SongRequestManagerV2.Bots.KEYBOARD;
+using Keyboard = SongRequestManagerV2.Bots.Keyboard;
 
 namespace SongRequestManagerV2.Views
 {
@@ -224,7 +225,6 @@ namespace SongRequestManagerV2.Views
             }
             else if (args.PropertyName == nameof(this.PerformanceMode)) {
                 RequestBotConfig.Instance.PerformanceMode = this.PerformanceMode;
-                RequestBotConfig.Instance.Save();
             }
         }
 
@@ -381,7 +381,7 @@ namespace SongRequestManagerV2.Views
                 var currentsong = CurrentlySelectedSong();
 
                 _CurrentSongName.text = currentsong.song["songName"].Value;
-                _CurrentSongName2.text = $"{currentsong.song["authorName"].Value} ({currentsong.song["version"].Value})";
+                _CurrentSongName2.text = $"{currentsong.song["songAuthorName"].Value} ({currentsong.song["version"].Value})";
 
                 ColorDeckButtons(CenterKeys, Color.white, Color.magenta);
             }
@@ -423,13 +423,13 @@ namespace SongRequestManagerV2.Views
                 }
 
                 // get song
-                var song = this._bot.CurrentSong.SongNode;
+                var song = this._bot.CurrentSong.SongMetaData;
 
                 // indicate dialog is active
                 this.confirmDialogActive = true;
 
                 // show dialog
-                this.ShowDialog("跳过歌曲提示", $"跳过 {song["authorName"].Value}的{song["songName"].Value} \r\n确定要继续?", _onConfirm, () => { this.confirmDialogActive = false; });
+                this.ShowDialog("跳过歌曲提示", $"跳过 {song["songName"].Value} (作者 {song["songAuthorName"].Value})\r\n确定要继续?", _onConfirm, () => { this.confirmDialogActive = false; });
             }
         }
         [UIAction("blacklist-click")]
@@ -443,13 +443,13 @@ namespace SongRequestManagerV2.Views
                 }
 
                 // get song
-                var song = this._bot.CurrentSong.SongNode;
+                var song = this._bot.CurrentSong.SongMetaData;
 
                 // indicate dialog is active
                 this.confirmDialogActive = true;
 
                 // show dialog
-                this.ShowDialog("屏蔽歌曲提示", $"屏蔽 {song["authorName"].Value}的{song["songName"].Value}\r\n确定要继续?", _onConfirm, () => { this.confirmDialogActive = false; });
+                this.ShowDialog("屏蔽歌曲提示", $"屏蔽 {song["songName"].Value} (作者 {song["songAuthorName"].Value})\r\n确定要继续?", _onConfirm, () => { this.confirmDialogActive = false; });
             }
         }
         [UIAction("play-click")]
@@ -468,7 +468,6 @@ namespace SongRequestManagerV2.Views
         private void QueueButtonClick()
         {
             RequestBotConfig.Instance.RequestQueueOpen = !RequestBotConfig.Instance.RequestQueueOpen;
-            RequestBotConfig.Instance.Save();
             this._bot.WriteQueueStatusToFile(RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用");
             this._chatManager.QueueChatMessage(RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用");
             this.UpdateRequestUI();
@@ -512,7 +511,7 @@ namespace SongRequestManagerV2.Views
         #region // メンバ変数
         private static readonly object _lockObject = new object();
         private bool confirmDialogActive = false;
-        private KEYBOARD CenterKeys;
+        private Keyboard CenterKeys;
 
         [UIComponent("request-list")]
         private readonly CustomCellListTableData _requestTable;
@@ -524,7 +523,7 @@ namespace SongRequestManagerV2.Views
         [Inject]
         protected PhysicsRaycasterWithCache _physicsRaycaster;
         [Inject]
-        private readonly KEYBOARD.KEYBOARDFactiry _factiry;
+        private readonly Keyboard.KEYBOARDFactiry _factiry;
         [Inject]
         private readonly IRequestBot _bot;
         [Inject]
