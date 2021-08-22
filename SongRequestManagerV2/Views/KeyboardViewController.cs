@@ -32,7 +32,7 @@ namespace SongRequestManagerV2.Views
                 mykeyboard.DefaultActions();
                 const string SEARCH = @"
 
-[CLEAR SEARCH]/0 /2 [NEWEST]/0 /2 [RANKED]/0 /2 [UNFILTERED]/30 /2 [SEARCH]/0";
+[清空搜索]/0 /2 [最新]/0 /2 [PP曲]/0 /2 [不过滤]/30 /2 [搜索]/0";
 
 
 
