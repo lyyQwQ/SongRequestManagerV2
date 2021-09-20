@@ -111,7 +111,7 @@ namespace SongRequestManagerV2.Bots
 
             set => this.SetProperty(ref this.currentSong_, value);
         }
-
+        public SongRequest PlayNow { get; set; }
         /// <summary>
         /// This is string empty.
         /// </summary>
@@ -199,8 +199,6 @@ namespace SongRequestManagerV2.Bots
             GC.SuppressFinalize(this);
         }
         #endregion
-
-
 
         public void Newest(Keyboard.KEY key)
         {
@@ -679,7 +677,7 @@ namespace SongRequestManagerV2.Bots
                 }
                 else if (!autopick && songs.Count >= 4)
                 {
-                    errorMessage = $"'{request}' 的请求找到 {songs.Count} 条结果，请添加谱师名字缩小搜索范围或者使用 https://beatsaver.com 或https://beatmaps.io 来寻找";
+                    errorMessage = $"'{request}' 的请求找到 {songs.Count} 条结果，请添加谱师名字缩小搜索范围或者使用 https://beatsaver.com 来寻找";
                 }
                 else if (!autopick && songs.Count > 1 && songs.Count < 4)
                 {
@@ -2194,20 +2192,10 @@ namespace SongRequestManagerV2.Bots
         // BUG: This requires a switch, or should be disabled for those who don't allow links
         public string ShowSongLink(ParseState state)
         {
-            try  // We're accessing an element across threads, and currentsong doesn't need to be defined
-            {
-                var song = RequestManager.HistorySongs.FirstOrDefault() as SongRequest;
-                if (song != null)
-                {
-                    var json = song.SongNode;
-                    this._textFactory.Create().AddSong(json).QueueMessage(StringFormat.LinkSonglink.ToString());
-                }
+            if (this.PlayNow != null) {
+                var json = this.PlayNow.SongNode;
+                this._textFactory.Create().AddSong(json).QueueMessage(StringFormat.LinkSonglink.ToString());
             }
-            catch (Exception ex)
-            {
-                Logger.Error(ex);
-            }
-
             return success;
         }
 
