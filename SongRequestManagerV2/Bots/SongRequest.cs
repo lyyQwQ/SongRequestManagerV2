@@ -158,7 +158,7 @@ namespace SongRequestManagerV2
                                     try {
                                         this._coverImage.enabled = false;
                                         var dt = this._textFactory.Create().AddSong(this.SongNode).AddUser(this._requestor); // Get basic fields
-                                        dt.Add("Status", this.Status.ToString());
+                                        dt.Add("Status", RequestStatusToChinese(this.Status));
                                         dt.Add("Info", (this._requestInfo != "") ? " / " + this._requestInfo : "");
                                         dt.Add("RequestTime", this.RequestTime.ToLocalTime().ToString("hh:mm"));
                                         this.AuthorName = dt.Parse(StringFormat.QueueListRow2);
@@ -292,9 +292,38 @@ namespace SongRequestManagerV2
                 case RequestStatus.SongSearch:
                     result = "歌曲搜索";
                     break;
-
             }
             return result;
         }
+
+        /*public String RequestStatusToChinese(String requestStatus)
+        {
+            string result = "";
+            switch (requestStatus)
+            {
+                case "Invalid":
+                    result = "非法";
+                    break;
+                case "Queued":
+                    result = "队列中";
+                    break;
+                case "Blacklisted":
+                    result = "已屏蔽";
+                    break;
+                case "Skipped":
+                    result = "已跳过";
+                    break;
+                case "Played":
+                    result = "已游玩";
+                    break;
+                case "Wrongsong":
+                    result = "错误歌曲";
+                    break;
+                case "SongSearch":
+                    result = "歌曲搜索";
+                    break;
+            }
+            return result;
+        }*/
     }
 }
