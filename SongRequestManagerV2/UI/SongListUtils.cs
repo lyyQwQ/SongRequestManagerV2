@@ -1,5 +1,4 @@
-﻿using BS_Utils.Utilities;
-using HMUI;
+﻿using HMUI;
 using IPA.Utilities;
 using SongCore;
 using SongRequestManagerV2.Configuration;
@@ -26,15 +25,6 @@ namespace SongRequestManagerV2
         private readonly LevelFilteringNavigationController _levelFilteringNavigationController;
         [Inject]
         private readonly AnnotatedBeatmapLevelCollectionsViewController _annotatedBeatmapLevelCollectionsViewController;
-        private bool _initialized = false;
-        [Inject]
-        public void Constractor()
-        {
-            if (!this._initialized) {
-                this._initialized = true;
-            }
-        }
-
         private void SelectCustomSongPack(int index)
         {
             // get the Level Filtering Nav Controller, the top bar
@@ -52,7 +42,7 @@ namespace SongRequestManagerV2
 
                 this._levelFilteringNavigationController.UpdateCustomSongs();
 
-                yield return new WaitWhile(() => this._levelFilteringNavigationController.GetField<CancellationTokenSource>("_cancellationTokenSource") != null);
+                yield return new WaitWhile(() => this._levelFilteringNavigationController.GetField<CancellationTokenSource, LevelFilteringNavigationController>("_cancellationTokenSource") != null);
                 var gridView = this._annotatedBeatmapLevelCollectionsViewController.GetField<AnnotatedBeatmapLevelCollectionsGridView, AnnotatedBeatmapLevelCollectionsViewController>("_annotatedBeatmapLevelCollectionsGridView");
                 gridView.SelectAndScrollToCellWithIdx(isWip ? 1 : 0);
                 var customSong = isWip

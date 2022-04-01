@@ -1,5 +1,4 @@
 ﻿using ChatCore.Interfaces;
-using SongRequestManagerV2.Extentions;
 using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.Models;
 using SongRequestManagerV2.Statics;
@@ -76,8 +75,10 @@ namespace SongRequestManagerV2.Bases
             // BUG: Needs additional checking
 
             var fixedname = listname.ToLower();
-            if (!fixedname.EndsWith(".users"))
+            if (!fixedname.EndsWith(".users")) {
                 fixedname += ".users";
+            }
+
             this.Permittedusers = fixedname;
         }
 
@@ -85,19 +86,26 @@ namespace SongRequestManagerV2.Bases
         {
             // BUG: Most of these will be replaced.  
 
-            if (this.Method2 != null)
+            if (this.Method2 != null) {
                 this.Method2(state.User, state.Parameter, state.Flags, state.Info);
-            else if (this.Method != null)
+            }
+            else if (this.Method != null) {
                 this.Method(state.User, state.Parameter);
+            }
             //else if (Method3 != null) return Method3(this, state.user, state.parameter, state.flags, state.info);
-            else if (this.func1 != null)
+            else if (this.func1 != null) {
                 Dispatcher.RunCoroutine(this.func1(state));
-            else if (this.Subcommand != null)
+            }
+            else if (this.Subcommand != null) {
                 return this.Subcommand(state); // Recommended.
-            else if (this.Subcommand2 != null)
+            }
+            else if (this.Subcommand2 != null) {
                 this.Subcommand(state);
-            else if (this.AsyncSubCommand != null)
-                this.AsyncSubCommand(state).Await(null, null, null);
+            }
+            else if (this.AsyncSubCommand != null) {
+                _ = this.AsyncSubCommand(state);
+            }
+
             return success;
         }
         public ISRMCommand Setup(params string[] alias)
@@ -170,14 +178,21 @@ namespace SongRequestManagerV2.Bases
             return this;
         }
 
-
-
         #region Command List Save / Load functionality
-        public string GetHelpText() => this.ShortHelp;
+        public string GetHelpText()
+        {
+            return this.ShortHelp;
+        }
 
-        public string GetFlags() => this.Flags.ToString();
+        public string GetFlags()
+        {
+            return this.Flags.ToString();
+        }
 
-        public string GetAliases() => String.Join(",", this.Aliases.ToArray());
+        public string GetAliases()
+        {
+            return string.Join(",", this.Aliases.ToArray());
+        }
         #endregion
 
         private string Variable(ParseState state) // Basically show the value of a variable without parsing
@@ -185,7 +200,5 @@ namespace SongRequestManagerV2.Bases
             this._chatManager.QueueChatMessage(state._botcmd.UserParameter.ToString());
             return "";
         }
-
-
     }
 }

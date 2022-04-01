@@ -36,6 +36,8 @@ namespace SongRequestManagerV2
 
         [Inject]
         private readonly DynamicText.DynamicTextFactory _textFactory;
+        [Inject]
+        private readonly MapDatabase _mapDatabase;
 
         /// <summary>説明 を取得、設定</summary>
         private string hint_;
@@ -72,6 +74,7 @@ namespace SongRequestManagerV2
 
         public JSONObject SongNode { get; private set; }
         public JSONObject SongMetaData => this.SongNode["metadata"].AsObject;
+
         public JSONObject SongVersion { get; private set; }
         public bool IsWIP { get; private set; }
         public IChatUser _requestor;
@@ -118,8 +121,11 @@ namespace SongRequestManagerV2
             }
             this._hash = this.SongVersion["hash"].Value;
             this._coverURL = this.SongVersion["coverURL"].Value;
-            this._downloadURL = this.SongVersion["downloadURL"].Value;
-            if (MapDatabase.PPMap.TryGetValue(this.SongNode["id"].Value, out var pp)) {
+            // as.だのna.だの指定されると重くなるっぽい？
+            this._downloadURL = this.SongVersion["downloadURL"].Value
+                .Replace(RequestBot.BEATMAPS_AS_CDN_ROOT_URL, RequestBot.BEATMAPS_CDN_ROOT_URL)
+                .Replace(RequestBot.BEATMAPS_NA_CDN_ROOT_URL, RequestBot.BEATMAPS_CDN_ROOT_URL);
+            if (this._mapDatabase.PPMap.TryGetValue(this.SongNode["id"].Value, out var pp)) {
                 this.SongNode.Add("pp", new JSONNumber(pp));
             }
             return this;
@@ -129,7 +135,7 @@ namespace SongRequestManagerV2
         internal void Setup()
         {
             var name = this.IsWIP ? $"<color=\"yellow\">[WIP]</color> {this._songName}" : this._songName;
-            if (RequestBotConfig.Instance.PPSearch && MapDatabase.PPMap.TryGetValue(this.SongNode["id"].Value, out var pp) && 0 < pp) {
+            if (RequestBotConfig.Instance.PPSearch && this._mapDatabase.PPMap.TryGetValue(this.SongNode["id"].Value, out var pp) && 0 < pp) {
                 this.SongName = $"{name} <size=50%>{Utility.GetRating(this.SongNode)} <color=#4169e1>{pp:0.00} PP</color></size>";
             }
             else {
@@ -151,63 +157,69 @@ namespace SongRequestManagerV2
         /// lookup song from level id
         /// </summary>
         /// <returns></returns>
-        private IPreviewBeatmapLevel GetCustomLevel() => Loader.GetLevelByHash(this._hash.ToUpper());
+        private IPreviewBeatmapLevel GetCustomLevel()
+        {
+            return Loader.GetLevelByHash(this._hash.ToUpper());
+        }
 
-        public void SetCover() => Dispatcher.RunOnMainThread(async () =>
-                                {
-                                    try {
-                                        this._coverImage.enabled = false;
-                                        var dt = this._textFactory.Create().AddSong(this.SongNode).AddUser(this._requestor); // Get basic fields
-                                        dt.Add("Status", RequestStatusToChinese(this.Status));
-                                        dt.Add("Info", (this._requestInfo != "") ? " / " + this._requestInfo : "");
-                                        dt.Add("RequestTime", this.RequestTime.ToLocalTime().ToString("hh:mm"));
-                                        this.AuthorName = dt.Parse(StringFormat.QueueListRow2);
-                                        this.Hint = dt.Parse(StringFormat.SongHintText);
+        public void SetCover()
+        {
+            Dispatcher.RunOnMainThread(async () =>
+            {
+                try {
+                    this._coverImage.enabled = false;
+                    var dt = this._textFactory.Create().AddSong(this.SongNode).AddUser(this._requestor); // Get basic fields
+                    dt.Add("Status", this.Status.ToString());
+                    dt.Add("Info", (this._requestInfo != "") ? " / " + this._requestInfo : "");
+                    dt.Add("RequestTime", this.RequestTime.ToLocalTime().ToString("hh:mm"));
+                    this.AuthorName = dt.Parse(StringFormat.QueueListRow2);
+                    this.Hint = dt.Parse(StringFormat.SongHintText);
 
-                                        var imageSet = false;
+                    var imageSet = false;
 
-                                        if (SongCore.Loader.AreSongsLoaded) {
-                                            var level = this.GetCustomLevel();
-                                            if (level != null) {
-                                                //Logger.Debug("custom level found");
-                                                // set image from song's cover image
-                                                var tex = await level.GetCoverImageAsync(System.Threading.CancellationToken.None);
-                                                this._coverImage.sprite = tex;
-                                                imageSet = true;
-                                            }
-                                        }
+                    if (SongCore.Loader.AreSongsLoaded) {
+                        var level = this.GetCustomLevel();
+                        if (level != null) {
+                            //Logger.Debug("custom level found");
+                            // set image from song's cover image
+                            var tex = await level.GetCoverImageAsync(System.Threading.CancellationToken.None);
+                            this._coverImage.sprite = tex;
+                            imageSet = true;
+                        }
+                    }
 
-                                        if (!imageSet) {
-                                            var url = "";
-                                            if (!string.IsNullOrEmpty(this._coverURL)) {
-                                                url = this._coverURL;
-                                            }
-                                            else {
-                                                url = $"{RequestBot.BEATMAPS_CDN_ROOT_URL}/{this._hash.ToLower()}.jpg";
-                                            }
-                                            if (!_cachedTextures.TryGetValue(url, out var tex)) {
-                                                var b = await WebClient.DownloadImage(url, System.Threading.CancellationToken.None).ConfigureAwait(true);
+                    if (!imageSet) {
+                        var url = "";
+                        if (!string.IsNullOrEmpty(this._coverURL)) {
+                            url = this._coverURL;
+                        }
+                        else {
+                            url = $"{RequestBot.BEATMAPS_CDN_ROOT_URL}/{this._hash.ToLower()}.jpg";
+                        }
+                        if (!_cachedTextures.TryGetValue(url, out var tex)) {
+                            var b = await WebClient.DownloadImage(url, System.Threading.CancellationToken.None).ConfigureAwait(true);
 
-                                                tex = new Texture2D(2, 2);
-                                                tex.LoadImage(b);
+                            tex = new Texture2D(2, 2);
+                            tex.LoadImage(b);
 
-                                                try {
-                                                    _cachedTextures.AddOrUpdate(url, tex, (s, v) => tex);
-                                                }
-                                                catch (Exception e) {
-                                                    Logger.Error(e);
-                                                }
-                                            }
-                                            this._coverImage.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-                                        }
-                                    }
-                                    catch (Exception e) {
-                                        Logger.Error(e);
-                                    }
-                                    finally {
-                                        this._coverImage.enabled = true;
-                                    }
-                                });
+                            try {
+                                _cachedTextures.AddOrUpdate(url, tex, (s, v) => tex);
+                            }
+                            catch (Exception e) {
+                                Logger.Error(e);
+                            }
+                        }
+                        this._coverImage.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                    }
+                }
+                catch (Exception e) {
+                    Logger.Error(e);
+                }
+                finally {
+                    this._coverImage.enabled = true;
+                }
+            });
+        }
 
         public JSONObject ToJson()
         {

@@ -31,11 +31,20 @@ namespace SongRequestManagerV2
             this._content = body;
         }
 
-        public byte[] ContentToBytes() => this._content;
+        public byte[] ContentToBytes()
+        {
+            return this._content;
+        }
 
-        public string ContentToString() => Encoding.UTF8.GetString(this._content);
+        public string ContentToString()
+        {
+            return Encoding.UTF8.GetString(this._content);
+        }
 
-        public JSONNode ConvertToJsonNode() => JSONNode.Parse(this.ContentToString());
+        public JSONNode ConvertToJsonNode()
+        {
+            return JSONNode.Parse(this.ContentToString());
+        }
     }
 
     internal static class WebClient
@@ -134,6 +143,9 @@ namespace SongRequestManagerV2
                 do {
                     try {
                         // create new request messsage
+#if DEBUG
+                        Logger.Debug(url);
+#endif
                         var req = new HttpRequestMessage(methodType, url);
                         if (retryCount != 0) {
                             await Task.Delay(1000);
@@ -149,8 +161,9 @@ namespace SongRequestManagerV2
                 } while (resp?.StatusCode != HttpStatusCode.NotFound && resp?.IsSuccessStatusCode != true && retryCount <= RETRY_COUNT);
 
 
-                if (token.IsCancellationRequested)
+                if (token.IsCancellationRequested) {
                     throw new TaskCanceledException();
+                }
 
                 using (var memoryStream = new MemoryStream())
                 using (var stream = await resp.Content.ReadAsStreamAsync().ConfigureAwait(false)) {
@@ -164,11 +177,12 @@ namespace SongRequestManagerV2
                     progress?.Report(0);
 
                     while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) > 0) {
-                        if (token.IsCancellationRequested)
+                        if (token.IsCancellationRequested) {
                             throw new TaskCanceledException();
+                        }
 
                         if (contentLength != null) {
-                            progress?.Report((double)totalRead / (double)contentLength);
+                            progress?.Report(totalRead / (double)contentLength);
                         }
 
                         await memoryStream.WriteAsync(buffer, 0, bytesRead).ConfigureAwait(false);

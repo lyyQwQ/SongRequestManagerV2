@@ -1,54 +1,32 @@
-﻿using SongRequestManagerV2.Configuration;
-using SongRequestManagerV2.Extentions;
-using SongRequestManagerV2.Interfaces;
-using SongRequestManagerV2.SimpleJSON;
+﻿using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.Utils;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Runtime;
-using System.Text;
-using System.Threading.Tasks;
 using Zenject;
 
 namespace SongRequestManagerV2.Bots
 {
     public class MapDatabase
     {
-        public static ConcurrentDictionary<string, SongMap> MapLibrary { get; } = new ConcurrentDictionary<string, SongMap>();
-        public static ConcurrentDictionary<string, SongMap> LevelId { get; } = new ConcurrentDictionary<string, SongMap>();
-        public static ConcurrentDictionary<string, HashSet<string>> SearchDictionary { get; } = new ConcurrentDictionary<string, HashSet<string>>();
-        public static ConcurrentDictionary<string, float> PPMap { get; } = new ConcurrentDictionary<string, float>();
-
-        private static int tempid = 100000; // For now, we use these for local ID less songs
-
-        private static bool DatabaseImported = false;
-        public static bool DatabaseLoading = false;
-
+        public ConcurrentDictionary<string, SongMap> MapLibrary { get; } = new ConcurrentDictionary<string, SongMap>();
+        public ConcurrentDictionary<string, HashSet<string>> SearchDictionary { get; } = new ConcurrentDictionary<string, HashSet<string>>();
+        public ConcurrentDictionary<string, float> PPMap { get; } = new ConcurrentDictionary<string, float>();
+        public volatile int _hashCount = 0;
         [Inject]
-        private IRequestBot Bot { get; }
+        private readonly IRequestBot _bot;
         [Inject]
         private readonly IChatManager _chatManager;
-
         [Inject]
-        private readonly StringNormalization normalize;
-        [Inject]
-        private readonly SongMap.SongMapFactory _songMapFactory;
-
+        private readonly StringNormalization _normalize;
         // Fast? Full Text Search
-        public List<SongMap> Search(string searchKey)
+        public HashSet<SongMap> Search(string searchKey)
         {
-            if (!DatabaseImported && RequestBotConfig.Instance.LocalSearch) {
-                this.LoadCustomSongs().Await(null, null, null);
-            }
+            var result = new HashSet<SongMap>();
 
-            var result = new List<SongMap>();
-
-            if (this.Bot.GetBeatSaverId(searchKey) != "") {
-                if (MapDatabase.MapLibrary.TryGetValue(this.normalize.RemoveSymbols(searchKey, this.normalize.SymbolsNoDash), out var song)) {
+            if (this._bot.GetBeatSaverId(searchKey) != "") {
+                if (this.MapLibrary.TryGetValue(this._normalize.RemoveSymbols(searchKey, this._normalize.SymbolsNoDash), out var song)) {
                     result.Add(song);
                     return result;
                 }
@@ -56,352 +34,116 @@ namespace SongRequestManagerV2.Bots
 
             var resultlist = new List<HashSet<string>>();
 
-            var SearchParts = this.normalize.Split(searchKey);
+            var SearchParts = this._normalize.Split(searchKey);
 
             foreach (var part in SearchParts) {
-                if (!SearchDictionary.TryGetValue(part, out var idset))
+                if (!this.SearchDictionary.TryGetValue(part, out var idset)) {
                     return result; // Keyword must be found
+                }
+
                 resultlist.Add(idset);
             }
-
+            if (!resultlist.Any()) {
+                return result;
+            }
             // We now have n lists of candidates
-
             resultlist.Sort((L1, L2) => L1.Count.CompareTo(L2.Count));
 
             // We now have an optimized query
-
             // Compute all matches
+
             foreach (var map in resultlist[0]) {
+                var contain = true;
                 for (var i = 1; i < resultlist.Count; i++) {
-                    if (!resultlist[i].Contains(map))
-                        goto next; // We can't continue from here :(    
+                    contain = contain && resultlist[i].Contains(map);
                 }
-
-
+                if (!contain) {
+                    continue;
+                }
                 try {
-                    result.Add(MapDatabase.MapLibrary[map]);
+                    result.Add(this.MapLibrary[map]);
                 }
                 catch {
                     this._chatManager.QueueChatMessage($"map fail = {map}");
                 }
-
-            next:
-                ;
             }
-
             return result;
         }
 
-
-        public void RemoveMap(JSONObject song)
+        public void IndexSong(SongMap map)
         {
-
-        }
-        public void AddDirectory()
-        {
-
-        }
-
-        public void DownloadSongs()
-        {
-
-        }
-
-        public void SaveDatabase()
-        {
+            var song = map.SongObject;
             try {
-                var start = DateTime.Now;
-                //JSONArray arr = new JSONArray();
-                var arr = new JSONObject();
-                foreach (var entry in MapLibrary)
-                    arr.Add(entry.Value.SongObject["id"], entry.Value.SongObject);
-                File.WriteAllText(Path.Combine(Plugin.DataPath, "SongDatabase.dat"), arr.ToString());
-                this._chatManager.QueueChatMessage($"保存歌曲数据库 耗时 {(DateTime.Now - start).Seconds} 秒");
-            }
-            catch (Exception ex) {
-                Logger.Error(ex);
-            }
+                if (!song["srm_info"].IsObject) {
+                    return;
+                }
+                var info = song["srm_info"].AsObject;
+                var indexpp = (info["pp"].AsFloat > 0) ? "PP" : "";
+                var id = info["id"].Value;
+                this.IndexFields(true, id, info["songName"].Value, info["songSubName"].Value, info["songAuthorName"].Value, info["levelAuthorName"].Value, indexpp, info["maptype"].Value);
 
-        }
-
-        public void LoadDatabase()
-        {
-            try {
-                var start = DateTime.Now;
-                var path = Path.Combine(Plugin.DataPath, "SongDatabase.dat");
-
-                if (File.Exists(path)) {
-                    var json = JSON.Parse(File.ReadAllText(path));
-                    if (!json.IsNull) {
-                        var Count = json.Count;
-
-                        //foreach (JSONObject j in json.AsArray)
-                        //{                                    
-                        //    new SongMap(j);
-                        //}
-
-
-                        foreach (var kvp in json) {
-                            this._songMapFactory.Create((JSONObject)kvp.Value);
-                        }
-
-
-                        json = 0; // BUG: This doesn't actually help. The problem is that the json object is still being referenced.
-
-                        this._chatManager.QueueChatMessage($"读取 {Count} 条目 耗时 {(DateTime.Now - start).Seconds} 秒");
-                    }
+                if (!string.IsNullOrEmpty(info["id"].Value)) {
+                    this.MapLibrary.AddOrUpdate(info["id"].Value, map, (key, value) => map);
                 }
             }
             catch (Exception ex) {
-
-                Logger.Error(ex);
-                this._chatManager.QueueChatMessage($"{ex}");
+                this._chatManager.QueueChatMessage(ex.ToString());
             }
         }
 
-
-        public void ImportLoaderDatabase()
+        public void UnIndexSong(SongMap map)
         {
-            //foreach (var level in SongLoader.CustomLevels) {
-            //    new SongMap(level.customSongInfo.path);
-            //}
+            var song = map.SongObject;
+            var srmInfo = map.SRMInfo;
+            var indexpp = (song["pp"].AsFloat > 0) ? "PP" : "";
+            this.IndexFields(false, song["id"].Value, srmInfo["songName"].Value, srmInfo["songSubName"].Value, srmInfo["songAuthorName"].Value, srmInfo["levelAuthorName"].Value, indexpp, srmInfo["maptype"].Value);
+            this.MapLibrary.TryRemove(song["id"].Value, out _);
         }
 
-        public string Readzipjson(ZipArchive archive, string filename = "info.json")
+        private void IndexFields(bool Add, string id, params string[] parameters)
         {
-            var info = archive.Entries.First<ZipArchiveEntry>(e => (e.Name.EndsWith(filename)));
-            if (info == null)
-                return "";
-
-            var reader = new StreamReader(info.Open());
-            var result = reader.ReadToEnd();
-            reader.Close();
-            return result;
-        }
-
-
-        // Early code... index a full zip archive.
-        public async Task LoadZIPDirectory(string folder = "")
-        {
-            if (MapDatabase.DatabaseLoading)
-                return;
-
-            if (string.IsNullOrEmpty(folder)) {
-                folder = Environment.CurrentDirectory;
-            }
-
-            await Task.Run(() =>
-            {
-
-                var startingmem = GC.GetTotalMemory(true);
-
-                this._chatManager.QueueChatMessage($"开始读取存档");
-                var addcount = 0;
-                var StarTime = DateTime.Now;
-
-                var di = new DirectoryInfo(folder);
-
-                foreach (var f in di.GetFiles("*.zip")) {
-
-                    try {
-                        var x = ZipFile.OpenRead(f.FullName);
-                        var info = x.Entries.First<ZipArchiveEntry>(e => (e.Name.EndsWith("info.json")));
-
-                        var id = "";
-                        var version = "";
-                        this.GetIdFromPath(f.Name, ref id, ref version);
-
-                        if (MapDatabase.MapLibrary.ContainsKey(id)) {
-                            if (MapLibrary[id].Path != "")
-                                MapLibrary[id].Path = f.FullName;
-                            continue;
-                        }
-
-                        var song = JSONObject.Parse(this.Readzipjson(x)).AsObject;
-
-                        string hash;
-
-                        JSONNode difficultylevels = song["difficultyLevels"].AsArray;
-                        var FileAccumulator = new StringBuilder();
-                        foreach (var level in difficultylevels) {
-                            try {
-                                FileAccumulator.Append(this.Readzipjson(x, level.Value));
-                            }
-                            catch {
-                                //Instance.QueueChatMessage($"key={level.Key} value={level.Value}");
-                                //throw;
-                            }
-                        }
-
-                        hash = this.Bot.CreateMD5FromString(FileAccumulator.ToString());
-
-                        var levelId = string.Join("∎", hash, song["songName"].Value, song["songSubName"].Value, song["songAuthorName"], song["beatsPerMinute"].AsFloat.ToString()) + "∎";
-
-                        if (LevelId.ContainsKey(levelId)) {
-
-                            LevelId[levelId].Path = f.FullName;
-                            continue;
-                        }
-
-                        addcount++;
-
-                        song.Add("id", id);
-                        song.Add("hashMd5", hash);
-
-                        this._songMapFactory.Create(song, levelId, f.FullName);
-
-                        x = null;
-
+            foreach (var field in parameters) {
+                var parts = this._normalize.Split(field);
+                foreach (var part in parts) {
+                    if (part.Length < RequestBot.partialhash) {
+                        this.UpdateSearchEntry(part, id, Add);
                     }
-                    catch (Exception) {
-                        this._chatManager.QueueChatMessage($"处理 {f.FullName} 失败");
-                        //Instance.QueueChatMessage(ex.ToString());
+                    for (var i = RequestBot.partialhash; i <= part.Length; i++) {
+                        this.UpdateSearchEntry(part.Substring(0, i), id, Add);
                     }
-
-
                 }
-                this._chatManager.QueueChatMessage($"存档索引完成, {addcount} 文件已添加。耗时 ({(DateTime.Now - StarTime).TotalSeconds} 秒");
-                GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-                GC.Collect();
-                this._chatManager.QueueChatMessage($"哈希条目: {SongMap.HashCount} 内存占用: {(GC.GetTotalMemory(false) - startingmem) / 1048576} MB");
-
-
-            });
-
-
-            MapDatabase.DatabaseLoading = false;
+            }
         }
 
-
-        // Update Database from Directory
-        public Task LoadCustomSongs(string folder = "", string songid = "")
+        private void UpdateSearchEntry(string key, string id, bool Add = true)
         {
-            if (MapDatabase.DatabaseLoading) {
-                return Task.CompletedTask;
+            if (Add) {
+                this._hashCount++;
+            }
+            else {
+                this._hashCount--;
             }
 
-            DatabaseLoading = true;
-            return Task.Run(() =>
-            {
-                if (songid == "")
-                    this._chatManager.QueueChatMessage($"开始索引歌曲 {folder}");
-
-                var StarTime = DateTime.UtcNow;
-
-                if (folder == "")
-                    folder = Path.Combine(Environment.CurrentDirectory, "customsongs");
-
-                var files = new List<FileInfo>();  // List that will hold the files and subfiles in path
-                var folders = new List<DirectoryInfo>(); // List that hold direcotries that cannot be accessed
-
-                var di = new DirectoryInfo(folder);
-                FullDirList(di, "*");
-
-                if (RequestBotConfig.Instance.AdditionalSongPath != "") {
-                    di = new DirectoryInfo(RequestBotConfig.Instance.AdditionalSongPath);
-                    FullDirList(di, "*");
-                }
-
-                void FullDirList(DirectoryInfo dir, string searchPattern)
+            if (Add) {
+                this.SearchDictionary.AddOrUpdate(key, (k) =>
                 {
-                    try {
-                        foreach (var f in dir.GetFiles(searchPattern)) {
-                            if (f.FullName.EndsWith("info.json"))
-                                files.Add(f);
-                        }
-                    }
-                    catch {
-                        Console.WriteLine("Directory {0}  \n could not be accessed!!!!", dir.FullName);
-                        return;
-                    }
-
-                    foreach (var d in dir.GetDirectories()) {
-                        folders.Add(d);
-                        FullDirList(d, searchPattern);
-                    }
-                }
-
-                // This might need some optimization
-
-
-                this._chatManager.QueueChatMessage($"正在处理 {files.Count} 张谱面");
-                foreach (var item in files) {
-
-                    //msg.Add(item.FullName,", ");
-
-                    string id = "", version = "0";
-
-                    this.GetIdFromPath(item.DirectoryName, ref id, ref version);
-
-                    try {
-                        if (MapDatabase.MapLibrary.ContainsKey(id))
-                            continue;
-
-                        var song = JSONObject.Parse(File.ReadAllText(item.FullName)).AsObject;
-
-                        string hash;
-
-                        JSONNode difficultylevels = song["difficultyLevels"].AsArray;
-                        var FileAccumulator = new StringBuilder();
-                        foreach (var level in difficultylevels) {
-                            //Instance.QueueChatMessage($"key={level.Key} value={level.Value}");
-                            try {
-                                FileAccumulator.Append(File.ReadAllText($"{item.DirectoryName}\\{level.Value["jsonPath"].Value}"));
-                            }
-                            catch {
-                                //Instance.QueueChatMessage($"key={level.Key} value={level.Value}");
-                                //throw;
-                            }
-                        }
-
-                        hash = this.Bot.CreateMD5FromString(FileAccumulator.ToString());
-
-                        var levelId = string.Join("∎", hash, song["songName"].Value, song["songSubName"].Value, song["songAuthorName"], song["beatsPerMinute"].AsFloat.ToString()) + "∎";
-
-                        if (LevelId.ContainsKey(levelId)) {
-                            LevelId[levelId].Path = item.DirectoryName;
-                            continue;
-                        }
-
-                        song.Add("id", id);
-                        song.Add("hashMd5", hash);
-
-                        this._songMapFactory.Create(song, levelId, item.DirectoryName);
-                    }
-                    catch (Exception) {
-                        this._chatManager.QueueChatMessage($"处理 {item} 失败");
-                    }
-
-                }
-                var duration = DateTime.UtcNow - StarTime;
-                if (songid == "")
-                    this._chatManager.QueueChatMessage($"歌曲索引完成 ({duration.TotalSeconds} secs.");
-
-                DatabaseImported = true;
-                DatabaseLoading = false;
-            });
-        }
-
-        private bool GetIdFromPath(string path, ref string id, ref string version)
-        {
-            var parts = path.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-
-            id = "";
-            version = "0";
-
-            foreach (var part in parts) {
-                id = this.Bot.GetBeatSaverId(part);
-                if (id != "") {
-                    version = part;
-                    return true;
+                    var va = new HashSet<string>
+                    {
+                        id
+                    };
+                    return va;
+                },
+                (k, va) =>
+                {
+                    va.Add(id);
+                    return va;
+                });
+            }
+            else {
+                if (this.SearchDictionary.TryRemove(key, out var result)) {
+                    result?.Remove(id); // An empty keyword is fine, and actually uncommon
                 }
             }
-
-            id = tempid++.ToString();
-            version = $"{id}-0";
-            return false;
         }
-
-
     }
 }

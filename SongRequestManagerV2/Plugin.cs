@@ -17,6 +17,7 @@ namespace SongRequestManagerV2
     public class Plugin
     {
         public string Name => "Song Request ManagerV2";
+
         public static string Version => _meta.HVersion.ToString() ?? Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
         private static PluginMetadata _meta;
@@ -33,8 +34,9 @@ namespace SongRequestManagerV2
             Logger = log;
             Logger.Debug("Logger initialized.");
             RequestBotConfig.Instance = config.Generated<RequestBotConfig>();
-            zenjector.OnApp<SRMAppInstaller>();
-            zenjector.OnMenu<SRMMenuInstaller>();
+            zenjector.Install<SRMAppInstaller>(Location.App);
+            zenjector.Install<SRMMenuInstaller>(Location.Menu);
+            zenjector.Install<SRMGameInstaller>(Location.Player);
         }
 
         [OnStart]
@@ -43,17 +45,23 @@ namespace SongRequestManagerV2
             if (!Directory.Exists(DataPath)) {
                 Directory.CreateDirectory(DataPath);
             }
-
         }
 
         [OnExit]
-        public void OnExit() => this.IsApplicationExiting = true;
+        public void OnExit()
+        {
+            this.IsApplicationExiting = true;
+        }
+
         [OnEnable]
         public void OnEnabled()
         {
 
         }
         [OnDisable]
-        public void OnDisabled() => BouyomiPipeline.instance.Stop();
+        public void OnDisabled()
+        {
+            BouyomiPipeline.instance.Stop();
+        }
     }
 }

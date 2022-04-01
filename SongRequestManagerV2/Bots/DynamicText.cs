@@ -60,8 +60,9 @@ namespace SongRequestManagerV2.Bots
         {
 
             var aliastext = new StringBuilder();
-            foreach (var alias in botcmd.Aliases)
+            foreach (var alias in botcmd.Aliases) {
                 aliastext.Append($"{alias} ");
+            }
             this.Add("alias", aliastext.ToString());
 
             aliastext.Clear();
@@ -112,15 +113,19 @@ namespace SongRequestManagerV2.Bots
             //}
 
 
-            if (song["pp"].AsFloat > 0)
+            if (song["pp"].AsFloat > 0) {
                 this.Add("PP", song["pp"].AsInt.ToString() + " PP");
-            else
+            }
+            else {
                 this.Add("PP", "");
-
+            }
             this.Add("StarRating", Utility.GetStarRating(song)); // Add additional dynamic properties
             this.Add("Rating", Utility.GetRating(song));
             this.Add("BeatsaverLink", $"https://beatsaver.com/maps/{song["id"].Value}");
             this.Add("BeatsaberLink", $"https://bsaber.com/songs/{song["id"].Value}");
+            if (!string.IsNullOrEmpty(song["id"].Value)) {
+                this.Add("key", song["id"].Value);
+            }
             return this;
         }
 
@@ -130,7 +135,10 @@ namespace SongRequestManagerV2.Bots
         /// <param name="text"></param>
         /// <param name="parselong"></param>
         /// <returns></returns>
-        public string Parse(StringBuilder text, bool parselong = false) => this.Parse(text.ToString(), parselong);
+        public string Parse(StringBuilder text, bool parselong = false)
+        {
+            return this.Parse(text.ToString(), parselong);
+        }
 
         /// <summary>
         /// 
@@ -160,8 +168,9 @@ namespace SongRequestManagerV2.Bots
                     }
                     if (keywordlength > 0 && keywordlength != 0 && this.Dynamicvariables.TryGetValue(text.Substring(keywordstart, keywordlength), out var substitutetext)) {
 
-                        if (keywordlength == 1 && !parselong)
+                        if (keywordlength == 1 && !parselong) {
                             return output.ToString(); // Return at first sepearator on first 1 character code. 
+                        }
 
                         output.Append(substitutetext);
 

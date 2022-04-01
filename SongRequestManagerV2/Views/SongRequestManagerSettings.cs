@@ -2,6 +2,10 @@
 using BeatSaberMarkupLanguage.Settings;
 using BeatSaberMarkupLanguage.ViewControllers;
 using SongRequestManagerV2.Configuration;
+using SongRequestManagerV2.Statics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Zenject;
 
 namespace SongRequestManagerV2.Views
@@ -15,12 +19,14 @@ namespace SongRequestManagerV2.Views
         public bool AutopickFirstSong
         {
             get => RequestBotConfig.Instance.AutopickFirstSong;
+
             set => RequestBotConfig.Instance.AutopickFirstSong = value;
         }
         [UIValue("clear-nofail")]
         public bool ClearNofail
         {
             get => RequestBotConfig.Instance.ClearNoFail;
+
             set => RequestBotConfig.Instance.ClearNoFail = value;
         }
 
@@ -28,6 +34,7 @@ namespace SongRequestManagerV2.Views
         public float LowestAllowedRating
         {
             get => RequestBotConfig.Instance.LowestAllowedRating;
+
             set => RequestBotConfig.Instance.LowestAllowedRating = value;
         }
 
@@ -35,6 +42,7 @@ namespace SongRequestManagerV2.Views
         public int MaximumSongLength
         {
             get => (int)RequestBotConfig.Instance.MaximumSongLength;
+
             set => RequestBotConfig.Instance.MaximumSongLength = value;
         }
 
@@ -42,6 +50,7 @@ namespace SongRequestManagerV2.Views
         public int MinimumNJS
         {
             get => (int)RequestBotConfig.Instance.MinimumNJS;
+
             set => RequestBotConfig.Instance.MinimumNJS = value;
         }
 
@@ -49,6 +58,7 @@ namespace SongRequestManagerV2.Views
         public bool TtsSupport
         {
             get => !string.IsNullOrEmpty(RequestBotConfig.Instance.BotPrefix);
+
             set => RequestBotConfig.Instance.BotPrefix = value ? "! " : "";
         }
 
@@ -56,6 +66,7 @@ namespace SongRequestManagerV2.Views
         public int UserRequestLimit
         {
             get => RequestBotConfig.Instance.UserRequestLimit;
+
             set => RequestBotConfig.Instance.UserRequestLimit = value;
         }
 
@@ -63,6 +74,7 @@ namespace SongRequestManagerV2.Views
         public int SubRequestLimit
         {
             get => RequestBotConfig.Instance.SubRequestLimit;
+
             set => RequestBotConfig.Instance.SubRequestLimit = value;
         }
 
@@ -70,6 +82,7 @@ namespace SongRequestManagerV2.Views
         public int ModRequestLimit
         {
             get => RequestBotConfig.Instance.ModRequestLimit;
+
             set => RequestBotConfig.Instance.ModRequestLimit = value;
         }
 
@@ -77,6 +90,7 @@ namespace SongRequestManagerV2.Views
         public int VipBonusRequests
         {
             get => RequestBotConfig.Instance.VipBonusRequests;
+
             set => RequestBotConfig.Instance.VipBonusRequests = value;
         }
 
@@ -84,6 +98,7 @@ namespace SongRequestManagerV2.Views
         public bool ModFullRights
         {
             get => RequestBotConfig.Instance.ModFullRights;
+
             set => RequestBotConfig.Instance.ModFullRights = value;
         }
 
@@ -91,6 +106,7 @@ namespace SongRequestManagerV2.Views
         public bool LimitUserRequestsToSession
         {
             get => RequestBotConfig.Instance.LimitUserRequestsToSession;
+
             set => RequestBotConfig.Instance.LimitUserRequestsToSession = value;
         }
 
@@ -98,6 +114,7 @@ namespace SongRequestManagerV2.Views
         public int SessionResetAfterXHours
         {
             get => RequestBotConfig.Instance.SessionResetAfterXHours;
+
             set => RequestBotConfig.Instance.SessionResetAfterXHours = value;
         }
 
@@ -105,6 +122,7 @@ namespace SongRequestManagerV2.Views
         public bool PerformanceMode
         {
             get => RequestBotConfig.Instance.PerformanceMode;
+
             set => RequestBotConfig.Instance.PerformanceMode = value;
         }
 
@@ -112,6 +130,7 @@ namespace SongRequestManagerV2.Views
         public bool IsSoundEnable
         {
             get => RequestBotConfig.Instance.NotifySound;
+
             set => RequestBotConfig.Instance.NotifySound = value;
         }
 
@@ -119,15 +138,34 @@ namespace SongRequestManagerV2.Views
         public int Volume
         {
             get => RequestBotConfig.Instance.SoundVolume;
+
             set => RequestBotConfig.Instance.SoundVolume = value;
         }
         [UIValue("pp-sarch")]
         public bool PPSerch
         {
             get => RequestBotConfig.Instance.PPSearch;
+
             set => RequestBotConfig.Instance.PPSearch = value;
         }
+        [UIValue("link-types")]
+        public List<object> LinkTypes { get; } = new List<object>()
+            {
+                LinkType.OnlyRequest.ToString(),
+                LinkType.All.ToString()
+            };
 
-        public void Initialize() => BSMLSettings.instance.AddSettingsMenu("SRM V2", this.ResourceName, this);
+        
+        [UIValue("link-type")]
+        public string Current
+        {
+            get => RequestBotConfig.Instance.LinkType.ToString();
+
+            set => RequestBotConfig.Instance.LinkType = Enum.GetValues(typeof(LinkType)).OfType<LinkType>().FirstOrDefault(x => x.ToString() == value);
+        }
+        public void Initialize()
+        {
+            BSMLSettings.instance.AddSettingsMenu("SRM V2", this.ResourceName, this);
+        }
     }
 }

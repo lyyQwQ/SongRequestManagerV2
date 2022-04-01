@@ -7,17 +7,21 @@ using Zenject;
 
 namespace SongRequestManagerV2
 {
-    public class RequestFlowCoordinator : FlowCoordinator
+    public class RequestFlowCoordinator : FlowCoordinator, IInitializable, IDisposable
     {
         [Inject]
         private readonly RequestBotListView _requestBotListViewController;
         [Inject]
         private readonly KeyboardViewController _keyboardViewController;
+        private bool disposedValue;
 
         public event Action<SongRequest, bool> PlayProcessEvent;
         public event Action QueueStatusChanged;
 
-        public void RefreshSongList(bool obj) => this._requestBotListViewController.RefreshSongQueueList(obj);
+        public void RefreshSongList(bool obj)
+        {
+            this._requestBotListViewController.RefreshSongQueueList(obj);
+        }
 
         protected override void BackButtonWasPressed(ViewController topViewController)
         {
@@ -35,29 +39,27 @@ namespace SongRequestManagerV2
             base.BackButtonWasPressed(topViewController);
         }
 
-        [Inject]
-        public void Const()
+        private void OnPlayProcessEvent(SongRequest arg1, bool arg2)
         {
-            this._requestBotListViewController.ChangeTitle += s => this.SetTitle(s);
-            this._requestBotListViewController.PlayProcessEvent += (i, b) => this.PlayProcessEvent?.Invoke(i, b);
-            this._requestBotListViewController.PropertyChanged += this.OnRequestBotListViewController_PropertyChanged;
+            PlayProcessEvent?.Invoke(arg1, arg2);
         }
 
-        private void OnDestroy()
+        private void OnChangeTitle(string obj)
         {
-            this._requestBotListViewController.ChangeTitle -= s => this.SetTitle(s);
-            this._requestBotListViewController.PlayProcessEvent -= (i, b) => this.PlayProcessEvent?.Invoke(i, b);
-            this._requestBotListViewController.PropertyChanged -= this.OnRequestBotListViewController_PropertyChanged;
+            this.SetTitle(obj);
         }
 
         private void OnRequestBotListViewController_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (sender is RequestBotListView view && e.PropertyName == nameof(view.QueueButtonText)) {
-                this.QueueStatusChanged?.Invoke();
+                QueueStatusChanged?.Invoke();
             }
         }
 
-        public void ChangeProgressText(double value) => this._requestBotListViewController.ChangeProgressText(value);
+        public void ChangeProgressText(double value)
+        {
+            this._requestBotListViewController.ChangeProgressText(value);
+        }
 
         protected override void DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
         {
@@ -67,10 +69,35 @@ namespace SongRequestManagerV2
                 try {
                     this.ProvideInitialViewControllers(this._requestBotListViewController, null, this._keyboardViewController);
                 }
-                catch (System.Exception e) {
+                catch (Exception e) {
                     Logger.Error(e);
                 }
             }
+        }
+        public void Initialize()
+        {
+            this._requestBotListViewController.ChangeTitle += this.OnChangeTitle;
+            this._requestBotListViewController.PlayProcessEvent += this.OnPlayProcessEvent;
+            this._requestBotListViewController.PropertyChanged += this.OnRequestBotListViewController_PropertyChanged;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this.disposedValue) {
+                if (disposing) {
+                    this._requestBotListViewController.ChangeTitle -= this.OnChangeTitle;
+                    this._requestBotListViewController.PlayProcessEvent -= this.OnPlayProcessEvent;
+                    this._requestBotListViewController.PropertyChanged -= this.OnRequestBotListViewController_PropertyChanged;
+                }
+                this.disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // このコードを変更しないでください。クリーンアップ コードを 'Dispose(bool disposing)' メソッドに記述します
+            this.Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

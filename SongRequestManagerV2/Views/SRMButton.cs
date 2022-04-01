@@ -2,7 +2,6 @@ using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
-using BS_Utils.Utilities;
 using HMUI;
 using IPA.Utilities;
 using SongCore;
@@ -81,13 +80,12 @@ namespace SongRequestManagerV2.Views
             if (this.Current is LevelSelectionFlowCoordinator) {
                 this.Current.PresentFlowCoordinator(this._requestFlow, null, AnimationDirection.Horizontal, false, false);
             }
-            return;
         }
 
         internal void SetButtonColor()
         {
             ImageView underLine = null;
-            if (DateTime.Now.Month == 4 && DateTime.Now.Day == 1) {
+            if (Utility.IsAprilFool()) {
                 if (RequestManager.RequestSongs.Any()) {
                     Dispatcher.RunCoroutine(this.ChangeButtonColor());
                 }
@@ -126,7 +124,8 @@ namespace SongRequestManagerV2.Views
         {
             this._bot.ChangeButtonColor += this.SetButtonColor;
             this._bot.RefreshListRequest += this.RefreshListRequest;
-            this._requestFlow.QueueStatusChanged += this.OnQueueStatusChanged;
+            RequestBotConfig.Instance.ConfigChangedEvent += this.OnConfigChangedEvent;
+            this._requestFlow.QueueStatusChanged += this.ChangeButtonText;
             this._requestFlow.PlayProcessEvent += this.ProcessSongRequest;
 
             this.DownloadProgress.ProgressChanged -= this.Progress_ProgressChanged;
@@ -154,13 +153,22 @@ namespace SongRequestManagerV2.Views
 
             if (RequestBotConfig.Instance.AutoOpenRequestQueue && !RequestBotConfig.Instance.RequestQueueOpen) {
                 RequestBotConfig.Instance.RequestQueueOpen = true;
+                this._bot.WriteQueueStatusToFile(this._bot.QueueMessage(true));
             }
 
             this._bot.UpdateRequestUI();
             this.SetButtonColor();
         }
 
-        private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1) => this.isInGame = string.Equals(arg1.name, "GameCore", StringComparison.CurrentCultureIgnoreCase);
+        private void OnConfigChangedEvent(RequestBotConfig obj)
+        {
+            Dispatcher.RunOnMainThread(this.ChangeButtonText);
+        }
+
+        private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1)
+        {
+            this.isInGame = string.Equals(arg1.name, "GameCore", StringComparison.CurrentCultureIgnoreCase);
+        }
 
         #region Unity message
         protected override void OnDestroy()
@@ -168,26 +176,31 @@ namespace SongRequestManagerV2.Views
             Logger.Debug("OnDestroy");
             this._bot.ChangeButtonColor -= this.SetButtonColor;
             this._bot.RefreshListRequest -= this.RefreshListRequest;
-            this._requestFlow.QueueStatusChanged -= this.OnQueueStatusChanged;
+            RequestBotConfig.Instance.ConfigChangedEvent -= this.OnConfigChangedEvent;
             this._requestFlow.PlayProcessEvent -= this.ProcessSongRequest;
             this.DownloadProgress.ProgressChanged -= this.Progress_ProgressChanged;
             SceneManager.activeSceneChanged -= this.SceneManager_activeSceneChanged;
             Destroy(this._rootScreenGo);
             base.OnDestroy();
         }
-        #endregion
 
-        private void OnQueueStatusChanged()
+        public void OnEnable()
+        {
+            this.ChangeButtonText();
+        }
+        #endregion
+        private void ChangeButtonText()
         {
             try {
                 var externalComponents = this._button.gameObject.GetComponentsInChildren<ExternalComponents>(true).FirstOrDefault();
                 var textMesh = externalComponents.components.FirstOrDefault(x => x as TextMeshProUGUI) as TextMeshProUGUI;
-
-                if (RequestBotConfig.Instance.RequestQueueOpen) {
-                    textMesh.text = "打开";
-                }
-                else {
-                    textMesh.text = "关闭";
+                if (textMesh != null) {
+                    if (RequestBotConfig.Instance.RequestQueueOpen) {
+                        textMesh.text = "打开";
+                    }
+                    else {
+                        textMesh.text = "关闭";
+                    }
                 }
             }
             catch (Exception e) {
@@ -195,7 +208,10 @@ namespace SongRequestManagerV2.Views
             }
         }
 
-        private void Progress_ProgressChanged(object sender, double e) => this._requestFlow.ChangeProgressText(e);
+        private void Progress_ProgressChanged(object sender, double e)
+        {
+            this._requestFlow.ChangeProgressText(e);
+        }
 
         private void RefreshListRequest(bool obj)
         {
@@ -229,11 +245,7 @@ namespace SongRequestManagerV2.Views
                 if (request == null) {
                     return;
                 }
-                var songName = request.SongMetaData["songName"].Value;
-                var songIndex = Regex.Replace($"{request.SongNode["id"].Value} ({request.SongMetaData["songName"].Value} - {request.SongMetaData["levelAuthorName"].Value})", "[\\\\:*/?\"<>|]", "_");
-                songIndex = this.Normalize.RemoveDirectorySymbols(songIndex); // Remove invalid characters.
-
-                var currentSongDirectory = request.IsWIP ? Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomWIPLevels", songIndex) : Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", songIndex);
+                var currentSongDirectory = this.CreateSongDirectory(request);
                 var songHash = request.SongVersion["hash"].Value.ToUpper();
 
                 if (Loader.GetLevelByHash(songHash) == null) {
@@ -259,7 +271,6 @@ namespace SongRequestManagerV2.Views
                             Logger.Error(e);
                             return;
                         }
-                        zipStream.Close();
                     }
                     Dispatcher.RunCoroutine(this.WaitForRefreshAndSchroll(request));
 #if UNRELEASED
@@ -288,6 +299,20 @@ namespace SongRequestManagerV2.Views
             finally {
                 _downloadSemaphore.Release();
             }
+        }
+
+        private string CreateSongDirectory(SongRequest request)
+        {
+            var songIndex = Regex.Replace($"{request.SongNode["id"].Value} ({request.SongMetaData["songName"].Value} - {request.SongMetaData["levelAuthorName"].Value})", "[\\\\:*/?\"<>|]", "_");
+            songIndex = this.Normalize.RemoveDirectorySymbols(songIndex); // Remove invalid characters.
+            var result = request.IsWIP ? Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomWIPLevels", songIndex) : Path.Combine(Environment.CurrentDirectory, "Beat Saber_Data", "CustomLevels", songIndex);
+            var count = 1;
+            var resultLength = result.Length;
+            while (Directory.Exists(result)) {
+                result = $"{result.Substring(0, resultLength)}({count})";
+                count++;
+            }
+            return result;
         }
 
         private IEnumerator WaitForRefreshAndSchroll(SongRequest request)

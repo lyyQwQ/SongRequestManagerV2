@@ -7,6 +7,7 @@ using SongRequestManagerV2.Bases;
 using SongRequestManagerV2.Bots;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
+using SongRequestManagerV2.Localizes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -150,6 +151,17 @@ namespace SongRequestManagerV2.Views
         }
 
         /// <summary>説明 を取得、設定</summary>
+        private string _pefomanceModeText;
+        /// <summary>説明 を取得、設定</summary>
+        [UIValue("performance-mode-text")]
+        public string PerformanceModeText
+        {
+            get => this._pefomanceModeText ?? "";
+
+            set => this.SetProperty(ref this._pefomanceModeText, value);
+        }
+
+        /// <summary>説明 を取得、設定</summary>
         private bool isPerformanceMode_;
         /// <summary>説明 を取得、設定</summary>
         [UIValue("performance-mode")]
@@ -195,7 +207,7 @@ namespace SongRequestManagerV2.Views
         }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
-        #region // コマンド
+        #region // イベントアクション
         public event Action<string> ChangeTitle;
         public event Action<SongRequest, bool> PlayProcessEvent;
         #endregion
@@ -248,10 +260,14 @@ namespace SongRequestManagerV2.Views
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // パブリックメソッド
-        public void ChangeProgressText(double progress) => HMMainThreadDispatcher.instance?.Enqueue(() =>
-                                                         {
-                                                             this.ProgressText = $"下载进度 - {progress * 100:0.00} %";
-                                                         });
+        public void ChangeProgressText(double progress)
+        {
+            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            {
+                this.ProgressText = $"{ResourceWrapper.Get("TEXT_DOWNLOAD_PROGRESS")} - {progress * 100:0.00} %";
+            });
+        }
+
         public void UpdateRequestUI(bool selectRowCallback = false)
         {
             if (SceneManager.GetActiveScene().name == "GameCore") {
@@ -260,19 +276,31 @@ namespace SongRequestManagerV2.Views
             Dispatcher.RunOnMainThread(() =>
             {
                 try {
-                    this.QueueButtonText = RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用";
-                    this._queueButton.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "Underline").color = RequestBotConfig.Instance.RequestQueueOpen ? Color.green : Color.red;
-                    this.HistoryHoverHint = this.IsShowHistory ? "返回当前点歌队列" : "查看本次点歌队列历史";
-                    this.HistoryButtonText = this.IsShowHistory ? "请求" : "历史";
-                    this.PlayButtonText = this.IsShowHistory ? "重新开始" : "开始";
+                    this.QueueButtonText = RequestBotConfig.Instance.RequestQueueOpen ? ResourceWrapper.Get("BUTTON_QUEUE_OPEN") : ResourceWrapper.Get("BUTTON_QUEUE_CLOSE");
+                    this.PerformanceModeText = ResourceWrapper.Get("TEXT_PEFORMANCE_MODE");
                     this.PerformanceMode = RequestBotConfig.Instance.PerformanceMode;
+                    this.HistoryHoverHint = this.IsShowHistory ? ResourceWrapper.Get("HOVERHINT_REQUESTS") : ResourceWrapper.Get("HOVERHINT_HISTORY");
+                    this.HistoryButtonText = this.IsShowHistory ? ResourceWrapper.Get("BUTTON_REQUESTS") : ResourceWrapper.Get("BUTTON_HISTORY");
+                    this.PlayButtonText = this.IsShowHistory ? ResourceWrapper.Get("BUTTON_REPLAY") : ResourceWrapper.Get("BUTTON_PLAY");
                     this.RefreshSongQueueList(selectRowCallback);
+                    var underline = this._queueButton.GetComponentsInChildren<ImageView>(true).FirstOrDefault(x => x.name == "Underline");
+                    if (underline != null) {
+                        underline.color = RequestBotConfig.Instance.RequestQueueOpen ? Color.green : Color.red;
+                    }
+                }
+                catch (Exception e) {
+                    Logger.Error(e);
+                }
+                try {
+                    var underline = this._playButton.GetComponentsInChildren<ImageView>(true).FirstOrDefault(x => x.name == "Underline");
+                    if (underline != null) {
+                        underline.color = this.SelectedRow >= 0 ? Color.green : Color.red;
+                    }
                 }
                 catch (Exception e) {
                     Logger.Error(e);
                 }
             });
-            Dispatcher.RunOnMainThread(() => this._playButton.GetComponentsInChildren<ImageView>().FirstOrDefault(x => x.name == "Underline").color = this.SelectedRow >= 0 ? Color.green : Color.red);
         }
         /// <summary>
         /// Alter the state of the buttons based on selection
@@ -322,7 +350,6 @@ namespace SongRequestManagerV2.Views
         public void RefreshSongQueueList(bool selectRowCallback = false)
         {
             try {
-                //UpdateSelectSongInfo();
                 lock (_lockObject) {
                     this.Songs.Clear();
                     if (this.IsShowHistory) {
@@ -400,15 +427,18 @@ namespace SongRequestManagerV2.Views
             }
         }
         [UIAction("#post-parse")]
-        private void PostParse() =>
+        private void PostParse()
+        {
             // Set default RequestFlowCoordinator title
-            ChangeTitle?.Invoke(this.IsShowHistory ? "点歌历史" : "点歌队列");
+            ChangeTitle?.Invoke(this.IsShowHistory ? ResourceWrapper.Get("TEXT_FLOWCORDINATER_TITLE_HISTORY") : ResourceWrapper.Get("TEXT_FLOWCORDINATER_TITLE_QUEUE"));
+        }
+
         [UIAction("history-click")]
         private void HistoryButtonClick()
         {
             this.IsShowHistory = !this.IsShowHistory;
 
-            ChangeTitle?.Invoke(this.IsShowHistory ? "点歌历史" : "点歌队列");
+            ChangeTitle?.Invoke(this.IsShowHistory ? ResourceWrapper.Get("TEXT_FLOWCORDINATER_TITLE_HISTORY") : ResourceWrapper.Get("TEXT_FLOWCORDINATER_TITLE_QUEUE"));
         }
         [UIAction("skip-click")]
         private void SkipButtonClick()
@@ -458,9 +488,8 @@ namespace SongRequestManagerV2.Views
             if (this._requestTable.NumberOfCells() > 0) {
                 RequestBot.Played.Add(this._bot.CurrentSong.SongNode);
                 this._bot.WriteJSON(RequestBot.playedfilename, RequestBot.Played);
-
                 this.SetUIInteractivity(false);
-                this.PlayProcessEvent?.Invoke(this._bot.CurrentSong, this.IsShowHistory);
+                PlayProcessEvent?.Invoke(this._bot.CurrentSong, this.IsShowHistory);
             }
         }
 
@@ -468,13 +497,13 @@ namespace SongRequestManagerV2.Views
         private void QueueButtonClick()
         {
             RequestBotConfig.Instance.RequestQueueOpen = !RequestBotConfig.Instance.RequestQueueOpen;
-            this._bot.WriteQueueStatusToFile(RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用");
-            this._chatManager.QueueChatMessage(RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用");
+            this._bot.WriteQueueStatusToFile(this._bot.QueueMessage(RequestBotConfig.Instance.RequestQueueOpen));
+            this._chatManager.QueueChatMessage(RequestBotConfig.Instance.RequestQueueOpen ? "Queue is open." : "Queue is closed.");
             this.UpdateRequestUI();
         }
 
         [UIAction("selected-cell")]
-        private void SelectedCell(TableView tableView, object row)
+        private void SelectedCell(TableView _, object row)
         {
             var clip = this.randomSoundPicker?.PickRandomObject();
             if (clip) {
@@ -489,7 +518,10 @@ namespace SongRequestManagerV2.Views
             }
             this.SetUIInteractivity();
         }
-        private void SongLoader_SongsLoadedEvent(Loader arg1, System.Collections.Concurrent.ConcurrentDictionary<string, CustomPreviewBeatmapLevel> arg2) => this._requestTable?.tableView?.ReloadData();
+        private void SongLoader_SongsLoadedEvent(Loader arg1, System.Collections.Concurrent.ConcurrentDictionary<string, CustomPreviewBeatmapLevel> arg2)
+        {
+            this._requestTable?.tableView?.ReloadData();
+        }
 
 #if UNRELEASED
         private IPreviewBeatmapLevel CustomLevelForRow(int row)
@@ -609,7 +641,7 @@ namespace SongRequestManagerV2.Views
                 try {
                     #region History button
                     // History button
-                    this.HistoryButtonText = "历史";
+                    this.HistoryButtonText = ResourceWrapper.Get("BUTTON_HISTORY");
                     #endregion
                 }
                 catch (Exception e) {
@@ -618,7 +650,7 @@ namespace SongRequestManagerV2.Views
                 try {
                     #region Blacklist button
                     // Blacklist button
-                    this.BlackListButtonText = "屏蔽列表";
+                    this.BlackListButtonText = ResourceWrapper.Get("BUTTON_BLACK_LIST");
                     #endregion
                 }
                 catch (Exception e) {
@@ -626,7 +658,7 @@ namespace SongRequestManagerV2.Views
                 }
                 try {
                     #region Skip button
-                    this.SkipButtonName = "跳过";
+                    this.SkipButtonName = ResourceWrapper.Get("BUTTON_SKIP");
                     #endregion
                 }
                 catch (Exception e) {
@@ -635,7 +667,7 @@ namespace SongRequestManagerV2.Views
                 try {
                     #region Play button
                     // Play button
-                    this.PlayButtonText = "开始";
+                    this.PlayButtonText = ResourceWrapper.Get("BUTTON_PLAY");
                     #endregion
                 }
                 catch (Exception e) {
@@ -644,7 +676,7 @@ namespace SongRequestManagerV2.Views
                 try {
                     #region Queue button
                     // Queue button
-                    this.QueueButtonText = RequestBotConfig.Instance.RequestQueueOpen ? "队列已启用" : "队列已禁用";
+                    this.QueueButtonText = RequestBotConfig.Instance.RequestQueueOpen ? ResourceWrapper.Get("BUTTON_QUEUE_OPEN") : ResourceWrapper.Get("BUTTON_QUEUE_CLOSE");
                     #endregion
                 }
                 catch (Exception e) {
@@ -658,8 +690,6 @@ namespace SongRequestManagerV2.Views
                 catch (Exception e) {
                     Logger.Error(e);
                 }
-                //this._requestTable.tableView.selectionType = TableViewSelectionType.Single;
-
             }
             catch (Exception e) {
                 Logger.Error(e);
