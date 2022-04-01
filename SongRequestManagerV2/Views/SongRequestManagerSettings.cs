@@ -151,8 +151,8 @@ namespace SongRequestManagerV2.Views
         [UIValue("link-types")]
         public List<object> LinkTypes { get; } = new List<object>()
             {
-                LinkType.OnlyRequest.ToString(),
-                LinkType.All.ToString()
+                LinkTypeToChinese(LinkType.OnlyRequest),
+                LinkTypeToChinese(LinkType.All)
             };
 
         
@@ -166,6 +166,20 @@ namespace SongRequestManagerV2.Views
         public void Initialize()
         {
             BSMLSettings.instance.AddSettingsMenu("SRM V2", this.ResourceName, this);
+        }
+
+        public static string LinkTypeToChinese(LinkType linkType)
+        {
+            string result = "";
+            switch (linkType) {
+                case LinkType.OnlyRequest:
+                    result = "仅点歌";
+                    break;
+                case LinkType.All:
+                    result = "全部";
+                    break;
+            }
+            return result;
         }
     }
 }

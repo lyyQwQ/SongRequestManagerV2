@@ -169,7 +169,7 @@ namespace SongRequestManagerV2
                 try {
                     this._coverImage.enabled = false;
                     var dt = this._textFactory.Create().AddSong(this.SongNode).AddUser(this._requestor); // Get basic fields
-                    dt.Add("Status", this.Status.ToString());
+                    dt.Add("Status", RequestStatusToChinese(this.Status));
                     dt.Add("Info", (this._requestInfo != "") ? " / " + this._requestInfo : "");
                     dt.Add("RequestTime", this.RequestTime.ToLocalTime().ToString("hh:mm"));
                     this.AuthorName = dt.Parse(StringFormat.QueueListRow2);
@@ -278,7 +278,7 @@ namespace SongRequestManagerV2
 
         }
 
-        public String RequestStatusToChinese(RequestStatus requestStatus)
+        public string RequestStatusToChinese(RequestStatus requestStatus)
         {
             string result = "";
             switch (requestStatus)

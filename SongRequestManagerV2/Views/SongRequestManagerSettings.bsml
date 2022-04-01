@@ -16,7 +16,7 @@
     <checkbox text='提示音' value='is-sound-enable' ></checkbox>
     <slider-setting text='音量' increment='10' integer-only='true' min='0' max='100' value='volume' ></slider-setting>
     <bool-setting text='搜索PP' value='pp-sarch' bind-value='true' ></bool-setting>
-	<dropdown-list-setting text='!链接 类型' value='link-type' choices='link-types'></dropdown-list-setting>
+	<dropdown-list-setting text='!命令 类型' value='link-type' choices='link-types'></dropdown-list-setting>
   </settings-container>
 </bg>
 

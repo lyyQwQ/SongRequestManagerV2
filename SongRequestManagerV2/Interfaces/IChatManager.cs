@@ -2,7 +2,6 @@
 using ChatCore.Services;
 using ChatCore.Services.BiliBili;
 using ChatCore.Services.Twitch;
-using ChatCore.Services.BiliBili;
 using System.Collections.Concurrent;
 using Zenject;
 

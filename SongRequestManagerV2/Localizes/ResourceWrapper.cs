@@ -8,7 +8,7 @@ namespace SongRequestManagerV2.Localizes
         public static string Get(string key)
         {
             if (Utility.IsAprilFool()) {
-                var resourceType = typeof(Properties.Resource_kansai).GetProperty(key, BindingFlags.NonPublic | BindingFlags.Static);
+                var resourceType = typeof(Properties.Resource_SimplifiedChinese_AprilFools).GetProperty(key, BindingFlags.NonPublic | BindingFlags.Static);
                 if (resourceType == null) {
                     return string.Empty;
                 }
@@ -17,7 +17,7 @@ namespace SongRequestManagerV2.Localizes
                 }
             }
             else {
-                var resourceType = typeof(Properties.Resource).GetProperty(key, BindingFlags.NonPublic | BindingFlags.Static);
+                var resourceType = typeof(Properties.Resource_SimplifiedChinese).GetProperty(key, BindingFlags.NonPublic | BindingFlags.Static);
                 if (resourceType == null) {
                     return string.Empty;
                 }

@@ -118,45 +118,45 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="BUTTON_BLACK_LIST" xml:space="preserve">
-    <value>屏蔽列表</value>
+    <value>禁忌列表</value>
   </data>
   <data name="BUTTON_HISTORY" xml:space="preserve">
-    <value>历史</value>
+    <value>过往</value>
   </data>
   <data name="BUTTON_PLAY" xml:space="preserve">
-    <value>开始</value>
+    <value>战斗</value>
   </data>
   <data name="BUTTON_QUEUE_CLOSE" xml:space="preserve">
-    <value>队列已禁用</value>
+    <value>拒绝挑战</value>
   </data>
   <data name="BUTTON_QUEUE_OPEN" xml:space="preserve">
-    <value>队列已启用</value>
+    <value>接受挑战</value>
   </data>
   <data name="BUTTON_REPLAY" xml:space="preserve">
-    <value>重新开始</value>
+    <value>东山再起</value>
   </data>
   <data name="BUTTON_REQUESTS" xml:space="preserve">
-    <value>请求</value>
+    <value>战书</value>
   </data>
   <data name="BUTTON_SKIP" xml:space="preserve">
-    <value>跳过</value>
+    <value>无视</value>
   </data>
   <data name="HOVERHINT_HISTORY" xml:space="preserve">
-    <value>查看本次点歌队列历史</value>
+    <value>歌颂征战沙场英雄事迹</value>
   </data>
   <data name="HOVERHINT_REQUESTS" xml:space="preserve">
-    <value>返回当前点歌队列</value>
+    <value>书写保家卫国历史篇章</value>
   </data>
   <data name="TEXT_DOWNLOAD_PROGRESS" xml:space="preserve">
-    <value>下载进度</value>
+    <value>杀气</value>
   </data>
   <data name="TEXT_FLOWCORDINATER_TITLE_HISTORY" xml:space="preserve">
-    <value>点歌历史</value>
+    <value>丰功伟绩</value>
   </data>
   <data name="TEXT_FLOWCORDINATER_TITLE_QUEUE" xml:space="preserve">
-    <value>点歌队列</value>
+    <value>战场</value>
   </data>
   <data name="TEXT_PEFORMANCE_MODE" xml:space="preserve">
-    <value>性能模式</value>
+    <value>一心一意</value>
   </data>
 </root>

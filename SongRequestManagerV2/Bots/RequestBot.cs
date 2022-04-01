@@ -618,6 +618,7 @@ namespace SongRequestManagerV2.Bots
                     requestUrl = $"{BEATMAPS_API_ROOT_URL}/search/text/0?sortOrder=Latest&q={normalrequest}";
                     resp = await WebClient.GetAsync(requestUrl, System.Threading.CancellationToken.None);
                 }
+                Logger.Info("request url: " + requestUrl);
 #if DEBUG
                 Logger.Debug($"Start get map detial : {stopwatch.ElapsedMilliseconds} ms");
 #endif

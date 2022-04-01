@@ -50,6 +50,7 @@ namespace SongRequestManagerV2
     internal static class WebClient
     {
         private static HttpClient _client;
+        private static HttpClientHandler _handler;
         private static HttpClient Client
         {
             get
@@ -73,12 +74,14 @@ namespace SongRequestManagerV2
                 Logger.Error(e);
             }
 
+            _handler = new HttpClientHandler { UseCookies = false };
 
-            _client = new HttpClient()
+            _client = new HttpClient(_handler)
             {
                 Timeout = new TimeSpan(0, 0, 15)
             };
             _client.DefaultRequestHeaders.UserAgent.TryParseAdd($"SongRequestManagerV2/{Plugin.Version}");
+            _client.DefaultRequestHeaders.Add("Cookie", "aprilFools=1;");
         }
 
         internal static async Task<WebResponse> GetAsync(string url, CancellationToken token)

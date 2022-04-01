@@ -202,6 +202,10 @@
 		</PackageReference>
 	</ItemGroup>
   <ItemGroup>
+    <Compile Update="Properties\Resource.SimplifiedChinese.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
     <Compile Update="Properties\Resource.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -212,13 +216,17 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resource.kansai.resx</DependentUpon>
     </Compile>
-    <Compile Update="Properties\Resource.SimplifiedChinese.Designer.cs">
+    <Compile Update="Properties\Resource.SimplifiedChinese.AprilFools.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>Resource.SimplifiedChinese.resx</DependentUpon>
+      <DependentUpon>Resource.SimplifiedChinese.AprilFools.resx</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Update="Properties\Resource.SimplifiedChinese.AprilFools.resx">
+      <LastGenOutput>Resource.SimplifiedChinese.AprilFools.Designer.cs</LastGenOutput>
+      <Generator>ResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
     <EmbeddedResource Update="Properties\Resource.kansai.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resource.kansai.Designer.cs</LastGenOutput>
@@ -229,7 +237,7 @@
     </EmbeddedResource>
     <EmbeddedResource Update="Properties\Resource.SimplifiedChinese.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resource.SimplifiedChinese.Designer.cs</LastGenOutput>
+      <LastGenOutput>Resource.SimplifiedChinese.AprilFools.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
