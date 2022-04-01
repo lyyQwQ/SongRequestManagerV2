@@ -1509,7 +1509,7 @@ namespace SongRequestManagerV2.Bots
             var parts = state.Parameter.Split(new char[] { ' ', ',' }, 2);
 
             if (!float.TryParse(parts[0], out var period)) {
-                return state.Error($"你必须在 {state.Command} 后输入时间(分钟)"));
+                return state.Error($"你必须在 {state.Command} 后输入时间(分钟)");
             }
 
             if (period < 1) {

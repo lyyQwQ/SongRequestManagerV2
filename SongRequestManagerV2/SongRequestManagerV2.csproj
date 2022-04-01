@@ -212,6 +212,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resource.kansai.resx</DependentUpon>
     </Compile>
+    <Compile Update="Properties\Resource.SimplifiedChinese.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resource.SimplifiedChinese.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resource.kansai.resx">
@@ -221,6 +226,10 @@
     <EmbeddedResource Update="Properties\Resource.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Properties\Resource.SimplifiedChinese.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resource.SimplifiedChinese.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
