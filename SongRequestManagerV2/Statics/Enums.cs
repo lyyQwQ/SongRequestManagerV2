@@ -215,4 +215,11 @@ namespace SongRequestManagerV2.Statics
         OnlyRequest,
         All
     }
+
+    public enum BeatsaverServer
+    {
+        Beatsaver,
+        BeatSaberChina,
+        WGzeyu
+    }
 }

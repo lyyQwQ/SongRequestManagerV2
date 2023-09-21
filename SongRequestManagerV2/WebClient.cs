@@ -105,7 +105,7 @@ namespace SongRequestManagerV2
                 return null;
             }
             catch (Exception e) {
-                Logger.Error(e);
+                // Logger.Error(e);
                 return null;
             }
         }
@@ -132,7 +132,7 @@ namespace SongRequestManagerV2
                 return null;
             }
             catch (Exception e) {
-                Logger.Error(e);
+                // Logger.Error(e);
                 return null;
             }
         }
@@ -155,10 +155,14 @@ namespace SongRequestManagerV2
                         }
                         retryCount++;
                         resp = await Client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false);
-                        Logger.Debug($"resp code : {resp.StatusCode}");
+                        if (resp.StatusCode != HttpStatusCode.OK) { Logger.Debug($"Response code : {resp.StatusCode}, url: {url}, retry: {retryCount}/{RETRY_COUNT}"); }
                     }
                     catch (Exception e) {
-                        Logger.Error($"resp code : {resp?.StatusCode}");
+                        if (resp == null) {
+                            Logger.Error($"Response Timeout, url: {url}, retry: {retryCount}/{RETRY_COUNT}");
+                        } else {
+                            Logger.Error($"Response code : {resp?.StatusCode}, url: {url}, retry: {retryCount}/{RETRY_COUNT}");
+                        }
                         Logger.Error(e);
                     }
                 } while (resp?.StatusCode != HttpStatusCode.NotFound && resp?.IsSuccessStatusCode != true && retryCount <= RETRY_COUNT);

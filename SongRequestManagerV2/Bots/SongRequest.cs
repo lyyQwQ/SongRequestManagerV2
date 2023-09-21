@@ -2,7 +2,7 @@
 using ChatCore.Interfaces;
 using ChatCore.Models;
 using ChatCore.Models.Twitch;
-using ChatCore.Models.BiliBili;
+using ChatCore.Models.Bilibili;
 using HMUI;
 using SongCore;
 using SongRequestManagerV2.Bases;
@@ -123,8 +123,11 @@ namespace SongRequestManagerV2
             this._coverURL = this.SongVersion["coverURL"].Value;
             // as.だのna.だの指定されると重くなるっぽい？
             this._downloadURL = this.SongVersion["downloadURL"].Value
-                .Replace(RequestBot.BEATMAPS_AS_CDN_ROOT_URL, RequestBot.BEATMAPS_CDN_ROOT_URL)
-                .Replace(RequestBot.BEATMAPS_NA_CDN_ROOT_URL, RequestBot.BEATMAPS_CDN_ROOT_URL);
+                .Replace(RequestBot.BEATMAPS_AS_CDN_ROOT_URL, RequestBot.BEATMAPS_ORIGIN_CDN_ROOT_URL)
+                .Replace(RequestBot.BEATMAPS_NA_CDN_ROOT_URL, RequestBot.BEATMAPS_ORIGIN_CDN_ROOT_URL)
+                .Replace(RequestBot.BEATMAPS_EU_CDN_ROOT_URL, RequestBot.BEATMAPS_ORIGIN_CDN_ROOT_URL)
+                .Replace(RequestBot.BEATMAPS_R2_CDN_ROOT_URL, RequestBot.BEATMAPS_ORIGIN_CDN_ROOT_URL)
+                .Replace(RequestBot.BEATMAPS_ORIGIN_CDN_ROOT_URL, RequestBot.BEATMAPS_CDN_ROOT_URL);
             if (this._mapDatabase.PPMap.TryGetValue(this.SongNode["id"].Value, out var pp)) {
                 this.SongNode.Add("pp", new JSONNumber(pp));
             }

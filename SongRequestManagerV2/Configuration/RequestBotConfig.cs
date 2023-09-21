@@ -35,6 +35,7 @@ namespace SongRequestManagerV2.Configuration
         public virtual string LastBackup { get; set; } = DateTime.MinValue.ToString();
         public virtual string BackupPath { get; set; } = Path.Combine(Environment.CurrentDirectory, "userdata", "backup");
         public virtual bool PPSearch { get; set; } = true;
+        public virtual bool FeedbackText { get; set; } = true;
         public virtual bool IsStartServer { get; set; } = false;
         public virtual int ReceivePort { get; set; } = 50001;
         public virtual bool IsSendBouyomi { get; set; } = false;
@@ -43,6 +44,8 @@ namespace SongRequestManagerV2.Configuration
         public virtual bool NotifySound { get; set; } = false;
         public virtual int SoundVolume { get; set; } = 50;
         public virtual bool EnableAprilFool { get; set; } = true;
+        [UseConverter(typeof(EnumConverter<BeatsaverServer>))]
+        public virtual BeatsaverServer BeatsaverServer { get; set; } = BeatsaverServer.Beatsaver;
         [UseConverter(typeof(EnumConverter<LinkType>))]
         public virtual LinkType LinkType { get; set; } = LinkType.All;
         // 使ってない設定達 R.I.P

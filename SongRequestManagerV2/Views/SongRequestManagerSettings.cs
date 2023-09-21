@@ -148,6 +148,21 @@ namespace SongRequestManagerV2.Views
 
             set => RequestBotConfig.Instance.PPSearch = value;
         }
+
+        [UIValue("feedback-text")]
+        public bool FeedbackText
+        {
+            get => RequestBotConfig.Instance.FeedbackText;
+
+            set => RequestBotConfig.Instance.FeedbackText = value;
+        }
+        [UIValue("beatsaver-servers")]
+        public List<object> BeatsaverServers { get; } = new List<object>()
+            {
+                BeatsaverServerToChinese(BeatsaverServer.Beatsaver),
+                BeatsaverServerToChinese(BeatsaverServer.BeatSaberChina),
+                BeatsaverServerToChinese(BeatsaverServer.WGzeyu)
+            };
         [UIValue("link-types")]
         public List<object> LinkTypes { get; } = new List<object>()
             {
@@ -157,12 +172,21 @@ namespace SongRequestManagerV2.Views
 
         
         [UIValue("link-type")]
-        public string Current
+        public string CurrentLinkType
         {
-            get => RequestBotConfig.Instance.LinkType.ToString();
+            get => LinkTypeToChinese(RequestBotConfig.Instance.LinkType);
 
-            set => RequestBotConfig.Instance.LinkType = Enum.GetValues(typeof(LinkType)).OfType<LinkType>().FirstOrDefault(x => x.ToString() == value);
+            set => RequestBotConfig.Instance.LinkType = Enum.GetValues(typeof(LinkType)).OfType<LinkType>().FirstOrDefault(x => LinkTypeToChinese(x) == value);
         }
+
+        [UIValue("beatsaver-server")]
+        public string CurrentBeatsaverServer
+        {
+            get => BeatsaverServerToChinese(RequestBotConfig.Instance.BeatsaverServer);
+
+            set => RequestBotConfig.Instance.BeatsaverServer = Enum.GetValues(typeof(BeatsaverServer)).OfType<BeatsaverServer>().FirstOrDefault(x => BeatsaverServerToChinese(x) == value );
+        }
+
         public void Initialize()
         {
             BSMLSettings.instance.AddSettingsMenu("SRM V2", this.ResourceName, this);
@@ -177,6 +201,23 @@ namespace SongRequestManagerV2.Views
                     break;
                 case LinkType.All:
                     result = "全部";
+                    break;
+            }
+            return result;
+        }
+
+        public static string BeatsaverServerToChinese(BeatsaverServer beatsaverServer)
+        {
+            string result = "";
+            switch (beatsaverServer) {
+                case BeatsaverServer.Beatsaver:
+                    result = "默认(BeatSaver)";
+                    break;
+                case BeatsaverServer.BeatSaberChina:
+                    result = "美国(光剑中文社区)";
+                    break;
+                case BeatsaverServer.WGzeyu:
+                    result = "香港(WGzeyu)";
                     break;
             }
             return result;

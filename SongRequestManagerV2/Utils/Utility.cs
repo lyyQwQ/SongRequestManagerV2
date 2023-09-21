@@ -1,6 +1,6 @@
 ﻿using ChatCore.Interfaces;
 using ChatCore.Models.Twitch;
-using ChatCore.Models.BiliBili;
+using ChatCore.Models.Bilibili;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.SimpleJSON;

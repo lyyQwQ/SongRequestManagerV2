@@ -1,6 +1,6 @@
 using ChatCore.Interfaces;
 using ChatCore.Models.Twitch;
-using ChatCore.Models.BiliBili;
+using ChatCore.Models.Bilibili;
 using IPA.Loader;
 using SongRequestManagerV2.Bases;
 using SongRequestManagerV2.Configuration;
@@ -68,12 +68,22 @@ namespace SongRequestManagerV2.Bots
         private static readonly Regex _drawcard = new Regex("($^)|(^[0-9a-zA-Z]+$)", RegexOptions.Compiled);
 
         public const string SCRAPED_SCORE_SABER_ALL_JSON_URL = "https://cdn.wes.cloud/beatstar/bssb/v2-ranked.json";
-        public const string BEATMAPS_API_ROOT_URL = "https://beatsaver.com/api";
-        public const string BEATMAPS_CDN_ROOT_URL = "https://cdn.beatsaver.com";
+        public const string BEATMAPS_ORIGIN_API_ROOT_URL = "https://beatsaver.com/api";
+        public const string BEATMAPS_ORIGIN_CDN_ROOT_URL = "https://cdn.beatsaver.com";
+        public static string BEATMAPS_API_ROOT_URL {
+            get => RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.Beatsaver ? BEATMAPS_ORIGIN_API_ROOT_URL :
+                (RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.BeatSaberChina ? "https://beatsaver.beatsaberchina.com/api" : "https://beatsaver.wgzeyu.vip/api");
+        }
+        public static string BEATMAPS_CDN_ROOT_URL {
+            get => RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.Beatsaver ? BEATMAPS_ORIGIN_CDN_ROOT_URL :
+                (RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.BeatSaberChina ? "https://beatsaver-cdn.beatsaberchina.com" : "https://beatsaver.wgzeyu.vip/cdn");
+        }
         public const string BEATMAPS_AS_CDN_ROOT_URL = "https://as.cdn.beatsaver.com";
         public const string BEATMAPS_NA_CDN_ROOT_URL = "https://na.cdn.beatsaver.com";
+        public const string BEATMAPS_EU_CDN_ROOT_URL = "https://eu.cdn.beatsaver.com";
+        public const string BEATMAPS_R2_CDN_ROOT_URL = "https://r2cdn.beatsaver.com";
 
-        private readonly System.Timers.Timer timer = new System.Timers.Timer(500);
+        private readonly System.Timers.Timer timer = new System.Timers.Timer(5000);
 
         [Inject]
         public StringNormalization Normalize { get; private set; }
@@ -252,7 +262,7 @@ namespace SongRequestManagerV2.Bots
 
         internal void RecievedMessages(IChatMessage msg)
         {
-            if (msg.Sender.GetType().Name == "TwitchUser" || ( msg.Sender.GetType().Name == "BiliBiliChatUser" && !msg.IsSystemMessage && !msg.Message.StartsWith("【") && !msg.Message.StartsWith("投喂")))
+            if (msg.Sender.GetType().Name == "TwitchUser" || ( msg.Sender.GetType().Name == "BilibiliChatUser" && !msg.IsSystemMessage && !msg.Message.StartsWith("【") && !msg.Message.StartsWith("投喂")))
             {
                 Logger.Debug($"Received Message : {msg.Message}");
 #if DEBUG
@@ -330,7 +340,9 @@ namespace SongRequestManagerV2.Bots
                 }
                 else if (this.ChatManager.SendMessageQueue.TryDequeue(out var message))
                 {
-                    this.SendChatMessage(message);
+                    if (RequestBotConfig.Instance.FeedbackText) {
+                        this.SendChatMessage(message);
+                    }
                 }
             }
             catch (Exception ex)
@@ -494,13 +506,11 @@ namespace SongRequestManagerV2.Bots
                         this.ChatManager.TwitchService.SendTextMessage($"{message}", channel.Value);
                     }
                 }
-                if (this.ChatManager.BiliBiliService != null)
+                if (this.ChatManager.BilibiliService != null)
                 {
-                    //TODO: Bilibili Cookies
-                    /*foreach (var channel in this.ChatManager.TwitchService.Channels)
-                    {
-                        this.ChatManager.TwitchService.SendTextMessage($"{message}", channel.Value);
-                    }*/
+                    foreach (var channel in this.ChatManager.BilibiliService.Channels) {
+                        this.ChatManager.BilibiliService.SendTextMessage($"[点歌姬] {message}", channel.Value);
+                    }
                 }
             }
             catch (Exception e)
@@ -649,7 +659,7 @@ namespace SongRequestManagerV2.Bots
                     {
                         msg.Header($"@{requestor.UserName}, please choose: ");
                     }
-                    else if (requestor is BiliBiliChatUser)
+                    else if (requestor is BilibiliChatUser)
                     {
                         msg.Header($"@{requestor.UserName}, 请选择: ");
                     }
@@ -908,7 +918,7 @@ namespace SongRequestManagerV2.Bots
                         limit += RequestBotConfig.Instance.VipBonusRequests; // Current idea is to give VIP's a bonus over their base subscription class, you can set this to 0 if you like
                     }
                 }
-                else if (state.User is BiliBiliChatUser biliBiliChatUser)
+                else if (state.User is BilibiliChatUser biliBiliChatUser)
                 {
                     if (biliBiliChatUser.IsFan)
                         limit = Math.Max(limit, RequestBotConfig.Instance.SubRequestLimit);
@@ -971,9 +981,9 @@ namespace SongRequestManagerV2.Bots
             {
                 return this.ChatManager.TwitchService?.LoggedInUser;
             }
-            else if (this.ChatManager.BiliBiliService?.LoggedInUser != null)
+            else if (this.ChatManager.BilibiliService?.LoggedInUser != null)
             {
-                return this.ChatManager.BiliBiliService?.LoggedInUser;
+                return this.ChatManager.BilibiliService?.LoggedInUser;
             }
             else
             {
@@ -1573,7 +1583,7 @@ namespace SongRequestManagerV2.Bots
                     return success;
                 }
             }
-            this.ChatManager.QueueChatMessage($"无法找到 {songId}");
+            this.ChatManager.QueueChatMessage($"无法找到 {songId} 或遇到网络问题");
             return success;
         }
 
