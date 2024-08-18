@@ -4,7 +4,7 @@
     <LangVersion>9</LangVersion>
     <Version>7.2.3</Version>
     <Platforms>AnyCPU</Platforms>
-	<AssemblySearchPaths>$(ReferencePath)</AssemblySearchPaths>
+    <AssemblySearchPaths>$(ReferencePath)</AssemblySearchPaths>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -17,6 +17,12 @@
     <None Remove="Resources\localize.csv" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="BGLib.Polyglot">
+      <HintPath>..\..\..\..\..\..\..\Users\m5689\BSManager\BSInstances\1.37.1\Beat Saber_Data\Managed\BGLib.Polyglot.dll</HintPath>
+    </Reference>
+    <Reference Include="DataModels">
+      <HintPath>..\..\..\..\..\..\..\Users\m5689\BSManager\BSInstances\1.37.1\Beat Saber_Data\Managed\DataModels.dll</HintPath>
+    </Reference>
     <Reference Include="GameplayCore, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\GameplayCore.dll</HintPath>
@@ -30,6 +36,11 @@
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Libs\Newtonsoft.Json.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="PlatformUserModel">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\PlatformUserModel.dll</HintPath>
+      <Private>False</Private>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Polyglot, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -84,6 +95,11 @@
     </Reference>
     <Reference Include="Unity.ProBuilder">
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Unity.ProBuilder.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="Unity.ResourceManager">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Unity.ResourceManager.dll</HintPath>
       <Private>False</Private>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
@@ -192,15 +208,15 @@
     <EmbeddedResource Include="Views\RequestBotListView.bsml" />
   </ItemGroup>
   <ItemGroup>
-	  <OutputCopy Include="$(OutputPath)SongRequestManagerV2.dll" OutputPath="Plugins\SongRequestManagerV2.dll" />
-	  <OutputCopy Include="Sound\NotifySound.wav" OutputPath="UserData\Song Request ManagerV2\NotifySound\NotifySound.wav" />
+    <OutputCopy Include="$(OutputPath)SongRequestManagerV2.dll" OutputPath="Plugins\SongRequestManagerV2.dll" />
+    <OutputCopy Include="Sound\NotifySound.wav" OutputPath="UserData\Song Request ManagerV2\NotifySound\NotifySound.wav" />
   </ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="BeatSaberModdingTools.Tasks" Version="2.0.0-beta1">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BeatSaberModdingTools.Tasks" Version="2.0.0-beta1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resource.SimplifiedChinese.Designer.cs">
       <DesignTime>True</DesignTime>
@@ -240,5 +256,9 @@
       <LastGenOutput>Resource.SimplifiedChinese.AprilFools.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

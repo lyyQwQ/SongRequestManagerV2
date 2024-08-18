@@ -8,6 +8,7 @@ using SongRequestManagerV2.Bots;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.Localizes;
+using SongRequestManagerV2.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -262,7 +263,7 @@ namespace SongRequestManagerV2.Views
         #region // パブリックメソッド
         public void ChangeProgressText(double progress)
         {
-            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            MainThreadInvoker.Instance.Enqueue(() =>
             {
                 this.ProgressText = $"{ResourceWrapper.Get("TEXT_DOWNLOAD_PROGRESS")} - {progress * 100:0.00} %";
             });
@@ -518,7 +519,7 @@ namespace SongRequestManagerV2.Views
             }
             this.SetUIInteractivity();
         }
-        private void SongLoader_SongsLoadedEvent(Loader arg1, System.Collections.Concurrent.ConcurrentDictionary<string, CustomPreviewBeatmapLevel> arg2)
+        private void SongLoader_SongsLoadedEvent(Loader arg1, System.Collections.Concurrent.ConcurrentDictionary<string, BeatmapLevel> arg2)
         {
             this._requestTable?.tableView?.ReloadData();
         }

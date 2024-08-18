@@ -1,4 +1,5 @@
 ﻿using BeatSaberMarkupLanguage.Components;
+using BeatSaberMarkupLanguage.Util;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -7,7 +8,7 @@ using UnityEngine;
 
 namespace SongRequestManagerV2.Bases
 {
-    public abstract class SingletonBindableBase<TController> : NotifiableSingleton<TController> where TController : MonoBehaviour
+    public abstract class SingletonBindableBase<TController> : NotifiableSingleton<TController> where TController : class, new()
     {
         private static SynchronizationContext context;
 
