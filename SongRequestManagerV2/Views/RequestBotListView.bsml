@@ -25,6 +25,7 @@
       <button text='~history-button-text' interactable='~history-button-enable' on-click='history-click' hover-hint='~history-hint' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
       <vertical pad-top='8' pad-bottom='8'>
         <button text='~skip-button-text' interactable='~skip-button-enable' hover-hint='从队列中删除所选请求' on-click='skip-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
+        <button text='~skip-all-button-text' interactable='~skip-all-button-enable' hover-hint='删除队列所有请求' on-click='skip-all-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
         <button text='~blacklist-button-text' interactable='~blacklist-button-enable' hover-hint='屏蔽所选的歌曲' on-click='blacklist-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
         <button id='play-button' text='~play-button-text' interactable='~play-button-enable' hover-hint='下载并跳转到当前所选歌曲' on-click='play-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
       </vertical>

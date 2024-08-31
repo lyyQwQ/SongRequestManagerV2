@@ -141,6 +141,9 @@
   <data name="BUTTON_SKIP" xml:space="preserve">
     <value>SKIP</value>
   </data>
+  <data name="BUTTON_SKIP_ALL" xml:space="preserve">
+    <value>SKIP ALL</value>
+  </data>
   <data name="HOVERHINT_HISTORY" xml:space="preserve">
     <value>View the history of song requests from the current session.</value>
   </data>
