@@ -17,9 +17,6 @@
     <None Remove="Resources\localize.csv" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="BGLib.Polyglot">
-      <HintPath>..\..\..\..\..\..\..\Users\m5689\BSManager\BSInstances\1.37.1\Beat Saber_Data\Managed\BGLib.Polyglot.dll</HintPath>
-    </Reference>
     <Reference Include="DataModels">
       <HintPath>..\..\..\..\..\..\..\Users\m5689\BSManager\BSInstances\1.37.1\Beat Saber_Data\Managed\DataModels.dll</HintPath>
     </Reference>

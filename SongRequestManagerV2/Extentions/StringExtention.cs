@@ -1,4 +1,4 @@
-﻿using BGLib.Polyglot;
+﻿using Polyglot;
 
 namespace SongRequestManagerV2.Extentions
 {

@@ -51,8 +51,8 @@ namespace SongRequestManagerV2
                 var gridView = this._annotatedBeatmapLevelCollectionsViewController.GetField<AnnotatedBeatmapLevelCollectionsGridView, AnnotatedBeatmapLevelCollectionsViewController>("_annotatedBeatmapLevelCollectionsGridView");
                 gridView.SelectAndScrollToCellWithIdx(isWip ? 1 : 0);
                 var customSong = isWip
-                    ? gridView.GetField<IReadOnlyList<BeatmapLevelPack>, AnnotatedBeatmapLevelCollectionsGridView>("_annotatedBeatmapLevelCollections").ElementAt(1)
-                    : gridView.GetField<IReadOnlyList<BeatmapLevelPack>, AnnotatedBeatmapLevelCollectionsGridView>("_annotatedBeatmapLevelCollections").FirstOrDefault();
+                    ? gridView.GetField<IReadOnlyList<IAnnotatedBeatmapLevelCollection>, AnnotatedBeatmapLevelCollectionsGridView>("_annotatedBeatmapLevelCollections").ElementAt(1)
+                    : gridView.GetField<IReadOnlyList<IAnnotatedBeatmapLevelCollection>, AnnotatedBeatmapLevelCollectionsGridView>("_annotatedBeatmapLevelCollections").FirstOrDefault();
                 // this._annotatedBeatmapLevelCollectionsViewController.HandleDidSelectAnnotatedBeatmapLevelCollection(customSong);
                 method = typeof(AnnotatedBeatmapLevelCollectionsViewController).GetMethod("HandleDidSelectAnnotatedBeatmapLevelCollection", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                 _ = (method?.Invoke(this._annotatedBeatmapLevelCollectionsViewController, new object[] { customSong }));
