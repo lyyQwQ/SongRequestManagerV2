@@ -261,9 +261,10 @@ namespace SongRequestManagerV2
                     url = this._downloadURL;
                 }
                 else {
-                    url = $"{RequestBot.BEATMAPS_CDN_ROOT_URL}/{this._hash.ToLower()}.zip";
+                    // url = $"{RequestBot.BEATMAPS_CDN_ROOT_URL}/{this._hash.ToLower()}.zip"; 用BEATMAPS_R2_CDN_ROOT_URL更快
+                    url = $"{RequestBot.BEATMAPS_R2_CDN_ROOT_URL}/{this._hash.ToLower()}.zip";  
                 }
-                var response = await WebClient.SendAsync(HttpMethod.Get, url, token, progress);
+                var response = await WebClient.SendAsyncUnity(HttpMethod.Get, url, token, progress);
 
                 if (response?.IsSuccessStatusCode == true) {
                     return response.ContentToBytes();
