@@ -131,7 +131,14 @@ namespace SongRequestManagerV2.Properties {
                 return ResourceManager.GetString("BUTTON_SKIP", resourceCulture);
             }
         }
-        
+        /// <summary>
+        ///   Looks up a localized string similar to 跳过全部.
+        /// </summary>
+        internal static string BUTTON_SKIP_ALL {
+            get {
+                return ResourceManager.GetString("BUTTON_SKIP_ALL", resourceCulture);
+            }
+        }
         /// <summary>
         ///   Looks up a localized string similar to 返回当前点歌队列.
         /// </summary>
