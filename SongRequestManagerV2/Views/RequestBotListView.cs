@@ -8,6 +8,7 @@ using SongRequestManagerV2.Bots;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.Localizes;
+using SongRequestManagerV2.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -39,6 +40,7 @@ namespace SongRequestManagerV2.Views
 
         /// <summary>説明 を取得、設定</summary>
         private string skipButtonName_;
+        private string skipAllButtonName_;
         /// <summary>説明 を取得、設定</summary>
         [UIValue("skip-button-text")]
         public string SkipButtonName
@@ -46,6 +48,14 @@ namespace SongRequestManagerV2.Views
             get => this.skipButtonName_ ?? "跳过";
 
             set => this.SetProperty(ref this.skipButtonName_, value);
+        }
+
+        [UIValue("skip-all-button-text")]
+        public string SkipAllButtonName
+        {
+            get => this.skipAllButtonName_ ?? "跳过全部";
+
+            set => this.SetProperty(ref this.skipAllButtonName_, value);
         }
 
         /// <summary>説明 を取得、設定</summary>
@@ -130,6 +140,7 @@ namespace SongRequestManagerV2.Views
 
         /// <summary>説明 を取得、設定</summary>
         private bool isSkipButtonEnable_;
+        private bool isSkipAllButtonEnable_;
         /// <summary>説明 を取得、設定</summary>
         [UIValue("skip-button-enable")]
         public bool IsSkipButtonEnable
@@ -137,6 +148,14 @@ namespace SongRequestManagerV2.Views
             get => this.isSkipButtonEnable_;
 
             set => this.SetProperty(ref this.isSkipButtonEnable_, value);
+        }
+
+        [UIValue("skip-all-button-enable")]
+        public bool IsSkipAllButtonEnable
+        {
+            get => this.isSkipAllButtonEnable_;
+
+            set => this.SetProperty(ref this.isSkipAllButtonEnable_, value);
         }
 
         /// <summary>説明 を取得、設定</summary>
@@ -331,6 +350,12 @@ namespace SongRequestManagerV2.Views
                 }
                 this.IsSkipButtonEnable = skipButtonEnabled;
 
+                var skipAllButtonEnabled = toggled;
+                if (toggled && this.IsShowHistory) {
+                    skipAllButtonEnabled = false;
+                }
+                this.IsSkipAllButtonEnable = skipAllButtonEnabled;
+
                 this.IsBlacklistButtonEnable = toggled;
 
                 // history button can be enabled even if others are disabled
@@ -339,6 +364,7 @@ namespace SongRequestManagerV2.Views
 
                 this.IsPlayButtonEnable = interactive;
                 this.IsSkipButtonEnable = interactive;
+                this.IsSkipAllButtonEnable = interactive;
                 this.IsBlacklistButtonEnable = interactive;
                 // history button can be enabled even if others are disabled
                 this.IsHistoryButtonEnable = true;
@@ -460,6 +486,25 @@ namespace SongRequestManagerV2.Views
 
                 // show dialog
                 this.ShowDialog("跳过歌曲提示", $"跳过 {song["songName"].Value} (作者 {song["songAuthorName"].Value})\r\n确定要继续?", _onConfirm, () => { this.confirmDialogActive = false; });
+            }
+        }
+        [UIAction("skip-all-click")]
+        private void SkipAllButtonClick()
+        {
+            if (this._requestTable.NumberOfCells() > 0) {
+                void _onConfirm()
+                {
+                    // skip it
+                    this._bot.SkipAll();
+                    // indicate dialog is no longer active
+                    this.confirmDialogActive = false;
+                }
+
+                // indicate dialog is active
+                this.confirmDialogActive = true;
+
+                // show dialog
+                this.ShowDialog("跳过全部歌曲提示", $"跳过全部歌曲\r\n确定要继续?", _onConfirm, () => { this.confirmDialogActive = false; });
             }
         }
         [UIAction("blacklist-click")]
@@ -659,6 +704,14 @@ namespace SongRequestManagerV2.Views
                 try {
                     #region Skip button
                     this.SkipButtonName = ResourceWrapper.Get("BUTTON_SKIP");
+                    #endregion
+                }
+                catch (Exception e) {
+                    Logger.Error(e);
+                }
+                try {
+                    #region Skip all button
+                    this.SkipAllButtonName = ResourceWrapper.Get("BUTTON_SKIP_ALL");
                     #endregion
                 }
                 catch (Exception e) {

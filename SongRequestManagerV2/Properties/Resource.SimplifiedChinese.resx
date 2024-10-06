@@ -141,6 +141,9 @@
   <data name="BUTTON_SKIP" xml:space="preserve">
     <value>跳过</value>
   </data>
+  <data name="BUTTON_SKIP_ALL" xml:space="preserve">
+    <value>跳过全部</value>
+  </data>
   <data name="HOVERHINT_HISTORY" xml:space="preserve">
     <value>查看本次点歌队列历史</value>
   </data>

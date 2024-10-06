@@ -141,6 +141,9 @@
   <data name="BUTTON_SKIP" xml:space="preserve">
     <value>とばすわ</value>
   </data>
+  <data name="BUTTON_SKIP_ALL" xml:space="preserve">
+    <value>とばすわ</value>
+  </data>
   <data name="HOVERHINT_HISTORY" xml:space="preserve">
     <value>履歴を確認しまっせ</value>
   </data>
