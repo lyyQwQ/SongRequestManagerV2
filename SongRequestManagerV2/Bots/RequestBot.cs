@@ -855,6 +855,14 @@ namespace SongRequestManagerV2.Bots
             this.UpdateRequestUI();
             this.RefreshSongQuere();
         }
+        public void SkipAll()
+        {
+            var requests = RequestManager.RequestSongs.ToList();
+            foreach (var request in requests)
+            {
+                this.Skip(request, RequestStatus.Skipped);
+            }
+        }
         public string GetBeatSaverId(string request)
         {
             request = this.Normalize.RemoveSymbols(request, this.Normalize.SymbolsNoDash);

@@ -141,6 +141,9 @@
   <data name="BUTTON_SKIP" xml:space="preserve">
     <value>无视</value>
   </data>
+  <data name="BUTTON_SKIP_ALL" xml:space="preserve">
+    <value>无视一切</value>
+  </data>
   <data name="HOVERHINT_HISTORY" xml:space="preserve">
     <value>歌颂征战沙场英雄事迹</value>
   </data>
