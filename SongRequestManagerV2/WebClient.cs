@@ -1,4 +1,6 @@
-﻿using SongRequestManagerV2.SimpleJSON;
+﻿using SongRequestManagerV2.Configuration;
+using SongRequestManagerV2.SimpleJSON;
+using SongRequestManagerV2.Statics;
 using SongRequestManagerV2.Utils;
 using System;
 using System.Collections;
@@ -251,53 +253,77 @@ namespace SongRequestManagerV2
         /// <param name="progress">进度回报</param>
         /// <returns>WebResponse 对象</returns>
         // 修改 SendAsyncUnity 方法
-        internal static async Task<WebResponse> SendAsyncUnity(HttpMethod methodType, string url, CancellationToken token, IProgress<double> progress = null)
+        internal static async Task<WebResponse> SendAsyncUnity(HttpMethod methodType, string url, CancellationToken token, IProgress<double> progress = null, bool retry = true)
         {
-            using (UnityWebRequest uwr = new UnityWebRequest(url, methodType.Method))
+            int maxRetries = 1;
+            if (retry) {
+                maxRetries = RETRY_COUNT;
+            }
+            int retryDelay = 1000; // 1秒
+
+            for (int retryCount = 0; retryCount < maxRetries; retryCount++)
             {
-                // 设置请求头
-                uwr.SetRequestHeader("User-Agent", $"SongRequestManagerV2/{Plugin.Version}");
-
-                // 根据方法类型设置下载处理器
-                if (methodType == HttpMethod.Get)
+                using (UnityWebRequest uwr = new UnityWebRequest(url, methodType.Method))
                 {
-                    uwr.downloadHandler = new DownloadHandlerBuffer();
-                }
-                else
-                {
-                    // 根据需要选择合适的 DownloadHandler
-                    uwr.downloadHandler = new DownloadHandlerBuffer();
-                }
-
-                // 创建 TaskCompletionSource
-                var tcs = new TaskCompletionSource<UnityWebRequest>();
-
-                // 启动协程并等待完成
-                CoroutineRunner.Instance.StartCoroutine(RunRequest(uwr, tcs, progress, token));
-
-                // 等待请求完成或取消
-                try
-                {
-                    using (token.Register(() => uwr.Abort()))
+                    // 设置请求头
+                    uwr.SetRequestHeader("User-Agent", $"SongRequestManagerV2/{Plugin.Version}");
+                    if (RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.EstrellaTest)
                     {
-                        var completedUwr = await tcs.Task.ConfigureAwait(false);
+                        uwr.SetRequestHeader("X-API-Key", "song-request-manager-estrella-20241006");
+                        Logger.Info("使用测试中转服务器");
+                    }
 
-                        // 创建 WebResponse 对象
-                        var response = new WebResponse(completedUwr, completedUwr.downloadHandler.data);
-                        return response;
+                    // 根据方法类型设置下载处理器
+                    if (methodType == HttpMethod.Get)
+                    {
+                        uwr.downloadHandler = new DownloadHandlerBuffer();
+                    }
+                    else
+                    {
+                        // 根据需要选择合适的 DownloadHandler
+                        uwr.downloadHandler = new DownloadHandlerBuffer();
+                    }
+
+                    // 创建 TaskCompletionSource
+                    var tcs = new TaskCompletionSource<UnityWebRequest>();
+
+                    // 启动协程并等待完成
+                    CoroutineRunner.Instance.StartCoroutine(RunRequest(uwr, tcs, progress, token));
+
+                    // 等待请求完成或取消
+                    try
+                    {
+                        using (token.Register(() => uwr.Abort()))
+                        {
+                            var completedUwr = await tcs.Task.ConfigureAwait(false);
+
+                            // 创建 WebResponse 对象
+                            var response = new WebResponse(completedUwr, completedUwr.downloadHandler.data);
+                            return response;
+                        }
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        Logger.Error("下载已取消。");
+                        return null;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (retryCount < maxRetries - 1)
+                        {
+                            Logger.Error($"下载失败，正在重试（第{retryCount + 1}次）: {ex.Message}");
+                            await Task.Delay(retryDelay, token);
+                        }
+                        else
+                        {
+                            Logger.Error($"下载失败，已达到最大重试次数: {ex.Message}");
+                            return null;
+                        }
                     }
                 }
-                catch (TaskCanceledException)
-                {
-                    Logger.Error("Download canceled.");
-                    return null;
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error($"Download failed: {ex.Message}");
-                    return null;
-                }
             }
+
+            return null;
         }
 
 
@@ -319,7 +345,7 @@ namespace SongRequestManagerV2
                 }
 
                 // 超时控制（例如 15 秒）
-                if (stopwatch.ElapsedMilliseconds > 15000)
+                if (stopwatch.ElapsedMilliseconds > 60000)
                 {
                     uwr.Abort();
                     tcs.TrySetException(new TimeoutException("Request timed out."));

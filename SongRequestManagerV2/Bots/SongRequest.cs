@@ -255,26 +255,43 @@ namespace SongRequestManagerV2
 
         public async Task<byte[]> DownloadZip(CancellationToken token = default(CancellationToken), IProgress<double> progress = null)
         {
-            try {
-                var url = "";
-                if (!string.IsNullOrEmpty(this._downloadURL)) {
-                    url = this._downloadURL;
-                }
-                else {
-                    // url = $"{RequestBot.BEATMAPS_CDN_ROOT_URL}/{this._hash.ToLower()}.zip"; 用BEATMAPS_R2_CDN_ROOT_URL更快
-                    url = $"{RequestBot.BEATMAPS_R2_CDN_ROOT_URL}/{this._hash.ToLower()}.zip";  
-                }
-                var response = await WebClient.SendAsyncUnity(HttpMethod.Get, url, token, progress);
+            const int maxRetries = 4;
+            for (int retry = 0; retry < maxRetries; retry++)
+            {
+                try {
+                    var url = "";
+                    if (!string.IsNullOrEmpty(this._downloadURL)) {
+                        url = this._downloadURL;
+                    }
+                    else {
+                        if (retry == 0) {
+                            // url = $"{RequestBot.BEATMAPS_R2_CDN_ROOT_URL}/{this._hash.ToLower()}.zip";
+                            url = $"{RequestBot.BEATMAPS_CDN_ROOT_URL}/{this._hash.ToLower()}.zip";
+                        } else {
+                            url = $"{RequestBot.BEATMAPS_CDN_ROOT_URL}/{this._hash.ToLower()}.zip";
+                        }
+                    }
+                    var response = await WebClient.SendAsyncUnity(HttpMethod.Get, url, token, progress, false);
 
-                if (response?.IsSuccessStatusCode == true) {
-                    return response.ContentToBytes();
+                    if (response?.IsSuccessStatusCode == true) {
+                        return response.ContentToBytes();
+                    } else {
+                        Logger.Error($"下载失败，重试次数：{retry + 1}，错误：{response.StatusCode}");
+                        if (retry == maxRetries - 1) {
+                            Logger.Error(response.ContentToString());
+                            return null;
+                        }
+                    }
                 }
-                return null;
+                catch (Exception e) {
+                    Logger.Error($"下载失败，重试次数：{retry + 1}，错误：{e.Message}");
+                    if (retry == maxRetries - 1) {
+                        Logger.Error(e);
+                        return null;
+                    }
+                }
             }
-            catch (Exception e) {
-                Logger.Error(e);
-                return null;
-            }
+            return null;
         }
 
         public class SongRequestFactory : PlaceholderFactory<SongRequest>
