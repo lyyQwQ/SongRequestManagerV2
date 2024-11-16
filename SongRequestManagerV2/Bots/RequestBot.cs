@@ -73,12 +73,37 @@ namespace SongRequestManagerV2.Bots
         public const string BEATMAPS_ORIGIN_API_ROOT_URL = "https://beatsaver.com/api";
         public const string BEATMAPS_ORIGIN_CDN_ROOT_URL = "https://cdn.beatsaver.com";
         public static string BEATMAPS_API_ROOT_URL {
-            get => RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.Beatsaver ? BEATMAPS_ORIGIN_API_ROOT_URL :
-                (RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.BeatSaberChina ? "https://beatsaver.beatsaberchina.com/api" : "https://beatsaver.wgzeyu.vip/api");
+            get {
+                switch (RequestBotConfig.Instance.BeatsaverServer) {
+                    case BeatsaverServer.Beatsaver:
+                        return BEATMAPS_ORIGIN_API_ROOT_URL;
+                    case BeatsaverServer.BeatSaberChina:
+                        return "https://beatsaver.beatsaberchina.com/api";
+                    case BeatsaverServer.WGzeyu:
+                        return "https://beatsaver.wgzeyu.vip/api";
+                    case BeatsaverServer.EstrellaTest:
+                        return "https://bsr-api.237162.xyz/api";
+                    default:
+                        return BEATMAPS_ORIGIN_API_ROOT_URL;
+                }
+            }
         }
         public static string BEATMAPS_CDN_ROOT_URL {
-            get => RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.Beatsaver ? BEATMAPS_ORIGIN_CDN_ROOT_URL :
-                (RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.BeatSaberChina ? "https://beatsaver-cdn.beatsaberchina.com" : "https://beatsaver.wgzeyu.vip/cdn");
+            get {
+                switch (RequestBotConfig.Instance.BeatsaverServer) {
+                    case BeatsaverServer.Beatsaver:
+                        return BEATMAPS_ORIGIN_CDN_ROOT_URL;
+                    case BeatsaverServer.BeatSaberChina:
+                        return "https://beatsaver-cdn.beatsaberchina.com";
+                    case BeatsaverServer.WGzeyu:
+                        return "https://beatsaver.wgzeyu.vip/cdn";
+                    case BeatsaverServer.EstrellaTest:
+                        // return "http://203.135.99.65:10020/";
+                        return "https://bsr-cdn.237162.xyz/";
+                    default:
+                        return BEATMAPS_ORIGIN_CDN_ROOT_URL;
+                }
+            }
         }
         public const string BEATMAPS_AS_CDN_ROOT_URL = "https://as.cdn.beatsaver.com";
         public const string BEATMAPS_NA_CDN_ROOT_URL = "https://na.cdn.beatsaver.com";
@@ -650,10 +675,10 @@ namespace SongRequestManagerV2.Bots
                 if (!songs.Any()) {
                     errorMessage = $"找不到请求 \"{request}\" 的可用结果";
                 }
-                else if (!autopick && songs.Count >= 4) {
+                else if (!autopick && songs.Count >= 11) {
                     errorMessage = $"'{request}' 的请求找到 {songs.Count} 条结果，请添加谱师名字缩小搜索范围或者使用 https://beatsaver.com 来寻找";
                 }
-                else if (!autopick && songs.Count > 1 && songs.Count < 4)
+                else if (!autopick && songs.Count > 1 && songs.Count < 11)
                 {
                     var msg = this._messageFactroy.Create().SetUp(1, 5);
                     //ToDo: Support Mixer whisper

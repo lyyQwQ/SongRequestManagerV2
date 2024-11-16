@@ -77,7 +77,11 @@ namespace SongRequestManagerV2.Views
 
         internal void SRMButtonPressed()
         {
-            if (this.Current is LevelSelectionFlowCoordinator) {
+            // Logger.Info("SRMButtonPressed, this.Current: " + this.Current.name);
+            // 再输出一下this.Current的类名
+            // Logger.Info("SRMButtonPressed, this.Current.GetType(): " + this.Current.GetType().Name);
+            if (this.Current is LevelSelectionFlowCoordinator or MultiplayerLevelSelectionFlowCoordinator || this.Current.name == "MultiplayerPViewFlowCoordinator") {
+                // Logger.Info("SRMButtonPressed, this.Current is LevelSelectionFlowCoordinator or MultiplayerLevelSelectionFlowCoordinator");
                 this.Current.PresentFlowCoordinator(this._requestFlow, null, AnimationDirection.Horizontal, false, false);
             }
         }

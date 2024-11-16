@@ -161,7 +161,8 @@ namespace SongRequestManagerV2.Views
             {
                 BeatsaverServerToChinese(BeatsaverServer.Beatsaver),
                 BeatsaverServerToChinese(BeatsaverServer.BeatSaberChina),
-                BeatsaverServerToChinese(BeatsaverServer.WGzeyu)
+                BeatsaverServerToChinese(BeatsaverServer.WGzeyu),
+                BeatsaverServerToChinese(BeatsaverServer.EstrellaTest)
             };
         [UIValue("link-types")]
         public List<object> LinkTypes { get; } = new List<object>()
@@ -218,6 +219,9 @@ namespace SongRequestManagerV2.Views
                     break;
                 case BeatsaverServer.WGzeyu:
                     result = "香港(WGzeyu)";
+                    break;
+                case BeatsaverServer.EstrellaTest:
+                    result = "测试(Estrella)";
                     break;
             }
             return result;
