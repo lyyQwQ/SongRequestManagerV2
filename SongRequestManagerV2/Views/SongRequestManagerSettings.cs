@@ -190,7 +190,7 @@ namespace SongRequestManagerV2.Views
 
         public void Initialize()
         {
-            BSMLSettings.instance.AddSettingsMenu("SRM V2", this.ResourceName, this);
+            BSMLSettings.Instance.AddSettingsMenu("SRM V2", this.ResourceName, this);
         }
 
         public static string LinkTypeToChinese(LinkType linkType)

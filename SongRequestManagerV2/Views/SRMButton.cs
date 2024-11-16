@@ -196,14 +196,16 @@ namespace SongRequestManagerV2.Views
         private void ChangeButtonText()
         {
             try {
-                var externalComponents = this._button.gameObject.GetComponentsInChildren<ExternalComponents>(true).FirstOrDefault();
-                var textMesh = externalComponents.components.FirstOrDefault(x => x as TextMeshProUGUI) as TextMeshProUGUI;
-                if (textMesh != null) {
-                    if (RequestBotConfig.Instance.RequestQueueOpen) {
-                        textMesh.text = "打开";
-                    }
-                    else {
-                        textMesh.text = "关闭";
+                var externalComponents = this._button?.gameObject?.GetComponentsInChildren<ExternalComponents>(true)?.FirstOrDefault();
+                if (externalComponents != null && externalComponents.Components != null) {
+                    var textMesh = externalComponents.Components.FirstOrDefault(x => x as TextMeshProUGUI) as TextMeshProUGUI;
+                    if (textMesh != null) {
+                        if (RequestBotConfig.Instance.RequestQueueOpen) {
+                            textMesh.text = "打开";
+                        }
+                        else {
+                            textMesh.text = "关闭";
+                        }
                     }
                 }
             }
