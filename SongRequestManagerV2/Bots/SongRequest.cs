@@ -9,6 +9,7 @@ using SongRequestManagerV2.Bases;
 using SongRequestManagerV2.Bots;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.SimpleJSON;
+using SongRequestManagerV2.Networks;
 using SongRequestManagerV2.Statics;
 using SongRequestManagerV2.Utils;
 using System;
@@ -87,7 +88,8 @@ namespace SongRequestManagerV2
         private string _coverURL;
         private string _downloadURL;
 
-        private static readonly ConcurrentDictionary<string, Texture2D> _cachedTextures = new ConcurrentDictionary<string, Texture2D>();
+        [Inject]
+        private readonly ImageCache _imageCache;
 
         public SongRequest Init(JSONObject obj)
         {
@@ -199,20 +201,19 @@ namespace SongRequestManagerV2
                         else {
                             url = $"{RequestBot.BEATMAPS_CDN_ROOT_URL}/{this._hash.ToLower()}.jpg";
                         }
-                        if (!_cachedTextures.TryGetValue(url, out var tex)) {
+                        if (!_imageCache.TryGet(url, out var tex)) {
                             var b = await WebClient.DownloadImage(url, System.Threading.CancellationToken.None).ConfigureAwait(true);
-
-                            tex = new Texture2D(2, 2);
-                            tex.LoadImage(b);
-
-                            try {
-                                _cachedTextures.AddOrUpdate(url, tex, (s, v) => tex);
-                            }
-                            catch (Exception e) {
-                                Logger.Error(e);
+                            if (b != null && b.Length > 0)
+                            {
+                                tex = new Texture2D(2, 2);
+                                tex.LoadImage(b);
+                                _imageCache.Add(url, tex);
                             }
                         }
-                        this._coverImage.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                        if (tex != null)
+                        {
+                            this._coverImage.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                        }
                     }
                 }
                 catch (Exception e) {

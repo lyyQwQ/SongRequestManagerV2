@@ -27,6 +27,7 @@ namespace SongRequestManagerV2.Installer
             this.Container.Bind<ListCollectionManager>().AsSingle();
             this.Container.BindInterfacesAndSelfTo<RequestBot>().AsSingle();
             this.Container.BindInterfacesAndSelfTo<DownloadService>().FromNewComponentOn(new GameObject(nameof(DownloadService))).AsSingle().NonLazy();
+            this.Container.BindInterfacesAndSelfTo<ImageCache>().FromNewComponentOn(new GameObject(nameof(ImageCache))).AsSingle().NonLazy();
         }
     }
 }
