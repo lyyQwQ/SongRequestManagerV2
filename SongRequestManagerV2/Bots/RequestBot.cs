@@ -110,7 +110,7 @@ namespace SongRequestManagerV2.Bots
         public const string BEATMAPS_EU_CDN_ROOT_URL = "https://eu.cdn.beatsaver.com";
         public const string BEATMAPS_R2_CDN_ROOT_URL = "https://r2cdn.beatsaver.com";
 
-        private readonly System.Timers.Timer timer = new System.Timers.Timer(5000);
+        private readonly System.Timers.Timer timer = new System.Timers.Timer(1000);
 
         [Inject]
         public StringNormalization Normalize { get; private set; }
