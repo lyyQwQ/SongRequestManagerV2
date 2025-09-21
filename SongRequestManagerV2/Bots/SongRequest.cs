@@ -174,7 +174,7 @@ namespace SongRequestManagerV2
                     var dt = this._textFactory.Create().AddSong(this.SongNode).AddUser(this._requestor); // Get basic fields
                     dt.Add("Status", RequestStatusToChinese(this.Status));
                     dt.Add("Info", (this._requestInfo != "") ? " / " + this._requestInfo : "");
-                    dt.Add("RequestTime", this.RequestTime.ToLocalTime().ToString("hh:mm"));
+                    dt.Add("RequestTime", this.RequestTime.ToLocalTime().ToString("yyyy/MM/dd HH:mm"));
                     this.AuthorName = dt.Parse(StringFormat.QueueListRow2);
                     this.Hint = dt.Parse(StringFormat.SongHintText);
 

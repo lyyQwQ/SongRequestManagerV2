@@ -10,7 +10,7 @@
         <background tags='selected' background='panel-fade-gradient' background-color='fuchsia'></background>
         <background tags='hovered' background='panel-top' hover-hint='~hover-hint'></background>
         <stack>
-          <horizontal vertical-fit='Unconstrained' horizontal-fit='MinSize'>
+          <horizontal vertical-fit='Unconstrained' horizontal-fit='MinSize' hover-hint='~hover-hint'>
             <image id="coverImage" min-height="8" min-width="8" pref-width="10" pref-height="5" anchor-min-x="0" anchor-min-y="0" anchor-max-x="0" anchor-max-y="1" ></image>
             <vertical horizontal-fit="Unconstrained" min-width="72" child-expand-width="true">
               <text id="songNameText" word-wrapping="false" text="~song-name"></text>
