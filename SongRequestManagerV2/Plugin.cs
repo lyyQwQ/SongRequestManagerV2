@@ -6,6 +6,7 @@ using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Installer;
 using SongRequestManagerV2.Installers;
 using SongRequestManagerV2.Networks;
+using SongRequestManagerV2.Utils;
 using System;
 using System.IO;
 using System.Reflection;
@@ -61,7 +62,10 @@ namespace SongRequestManagerV2
         [OnDisable]
         public void OnDisabled()
         {
-            BouyomiPipeline.instance.Stop();
+            if (PersistentSingleton<BouyomiPipeline>.IsSingletonAvailable)
+            {
+                BouyomiPipeline.instance.Stop();
+            }
         }
     }
 }

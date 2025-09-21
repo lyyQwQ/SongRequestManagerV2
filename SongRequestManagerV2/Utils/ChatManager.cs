@@ -75,7 +75,7 @@ namespace SongRequestManagerV2.Utils
                     Logger.Debug("Dispose call");
                     this.MultiplexerInstance.OnLogin -= this.MultiplexerInstance_OnLogin;
                     this.MultiplexerInstance.OnJoinChannel -= this.MultiplexerInstance_OnJoinChannel;
-                    this.MultiplexerInstance.OnTextMessageReceived += this.MultiplexerInstance_OnTextMessageReceived;
+                    this.MultiplexerInstance.OnTextMessageReceived -= this.MultiplexerInstance_OnTextMessageReceived;
                 }
 
                 // TODO: アンマネージド リソース (アンマネージド オブジェクト) を解放し、ファイナライザーをオーバーライドします
