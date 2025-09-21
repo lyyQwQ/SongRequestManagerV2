@@ -107,6 +107,7 @@ namespace SongRequestManagerV2.Interfaces
         string ShowSongLink(ParseState state);
         void Skip(SongRequest songRequest, RequestStatus status = RequestStatus.Skipped);
         void SkipAll();
+        void AddSearchResultToQueue(SongRequest request);
         string SongMsg(ParseState state);
         string SongSearchFilter(JSONObject song, bool fast = false, SongFilter filter = (SongFilter)(-1));
         void ToggleQueue(IChatUser requestor, string request, bool state);

@@ -91,6 +91,9 @@ namespace SongRequestManagerV2
         [Inject]
         private readonly ImageCache _imageCache;
 
+        [UIValue("is-search")]
+        public bool IsSearch => this.Status == RequestStatus.SongSearch;
+
         public SongRequest Init(JSONObject obj)
         {
             this.Init(

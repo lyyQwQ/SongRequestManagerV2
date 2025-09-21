@@ -8,6 +8,7 @@ using SongRequestManagerV2.Bots;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.Localizes;
+using SongRequestManagerV2.Statics;
 using SongRequestManagerV2.Utils;
 using System;
 using System.Collections.Generic;
@@ -167,6 +168,14 @@ namespace SongRequestManagerV2.Views
             get => this.isBlacklistButtonEnable_;
 
             set => this.SetProperty(ref this.isBlacklistButtonEnable_, value);
+        }
+
+        private bool addToQueueEnable_;
+        [UIValue("add-to-queue-enable")]
+        public bool AddToQueueEnable
+        {
+            get => this.addToQueueEnable_;
+            set => this.SetProperty(ref this.addToQueueEnable_, value);
         }
 
         /// <summary>説明 を取得、設定</summary>
@@ -366,6 +375,10 @@ namespace SongRequestManagerV2.Views
 
                 this.IsBlacklistButtonEnable = toggled;
 
+                // 添加到队列：仅当选中项是搜索结果且不在历史页时可用
+                var addEnable = toggled && !this.IsShowHistory && this._bot?.CurrentSong != null && this._bot.CurrentSong.Status == RequestStatus.SongSearch;
+                this.AddToQueueEnable = addEnable;
+
                 // history button can be enabled even if others are disabled
                 this.IsHistoryButtonEnable = true;
                 this.IsHistoryButtonEnable = interactive;
@@ -385,6 +398,7 @@ namespace SongRequestManagerV2.Views
         {
             try {
                 lock (_lockObject) {
+                    Logger.Debug($"[UI] RefreshSongQueueList IsShowHistory={this.IsShowHistory}, RequestSongs={RequestManager.RequestSongs.Count}, HistorySongs={RequestManager.HistorySongs.Count}");
                     this.Songs.Clear();
                     if (this.IsShowHistory) {
                         this.Songs.AddRange(RequestManager.HistorySongs);
@@ -392,6 +406,7 @@ namespace SongRequestManagerV2.Views
                     else {
                         this.Songs.AddRange(RequestManager.RequestSongs);
                     }
+                    Logger.Debug($"[UI] Songs bound count={this.Songs.Count}");
                     Dispatcher.RunOnMainThread(() =>
                     {
                         this._requestTable?.TableView?.ReloadData();
@@ -553,6 +568,15 @@ namespace SongRequestManagerV2.Views
             this._bot.WriteQueueStatusToFile(this._bot.QueueMessage(RequestBotConfig.Instance.RequestQueueOpen));
             this._chatManager.QueueChatMessage(RequestBotConfig.Instance.RequestQueueOpen ? "Queue is open." : "Queue is closed.");
             this.UpdateRequestUI();
+        }
+
+        [UIAction("add-to-queue-click")]
+        private void AddToQueueClick()
+        {
+            if (this._bot?.CurrentSong != null && this._bot.CurrentSong.Status == RequestStatus.SongSearch && !this.IsShowHistory)
+            {
+                this._bot.AddSearchResultToQueue(this._bot.CurrentSong);
+            }
         }
 
         [UIAction("selected-cell")]

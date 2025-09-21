@@ -888,6 +888,67 @@ namespace SongRequestManagerV2.Bots
                 this.Skip(request, RequestStatus.Skipped);
             }
         }
+
+        public void AddSearchResultToQueue(SongRequest request)
+        {
+            try
+            {
+                if (request == null || request.Status != RequestStatus.SongSearch)
+                {
+                    Logger.Debug("[AddToQueue] Skip: null or not SongSearch");
+                    return;
+                }
+
+                // 更新状态为已入队
+                this.SetRequestStatus(request, RequestStatus.Queued);
+
+                // 将该项移动到“已入队”尾部（保持其余顺序不变）
+                var list = RequestManager.RequestSongs.ToList();
+                // 移除当前项
+                list.Remove(request);
+                // 找到最后一个已入队项的位置
+                var lastQueuedIndex = -1;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i].Status == RequestStatus.Queued)
+                    {
+                        lastQueuedIndex = i;
+                    }
+                }
+                var insertIndex = lastQueuedIndex + 1;
+                if (insertIndex < 0) insertIndex = 0;
+                if (insertIndex > list.Count) insertIndex = list.Count;
+                list.Insert(insertIndex, request);
+
+                RequestManager.RequestSongs.Clear();
+                RequestManager.RequestSongs.AddRange(list);
+                Logger.Debug($"[AddToQueue] InsertIndex={insertIndex}, Count={RequestManager.RequestSongs.Count}");
+
+                // 去重表与持久化
+                try
+                {
+                    this.ListCollectionManager.Add(duplicatelist, request.SongNode["id"].Value);
+                }
+                catch { }
+                this._requestManager.WriteRequest();
+
+                // 提示
+                try
+                {
+                    this._textFactory.Create().AddSong(request.SongNode).QueueMessage(StringFormat.AddSongToQueueText.ToString());
+                }
+                catch { }
+
+                // 刷新 UI
+                this.UpdateRequestUI();
+                this.RefreshSongQuere();
+                this.RefreshQueue = true;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
+        }
         public string GetBeatSaverId(string request)
         {
             request = this.Normalize.RemoveSymbols(request, this.Normalize.SymbolsNoDash);
@@ -1921,6 +1982,7 @@ namespace SongRequestManagerV2.Bots
             {
                 RequestManager.RequestSongs.Add(req);
             }
+            Logger.Debug($"[Search] Added result. RequestSongs={RequestManager.RequestSongs.Count}");
         }
 
         #region Move Request To Top/Bottom

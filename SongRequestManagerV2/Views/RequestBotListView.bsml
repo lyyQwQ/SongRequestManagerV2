@@ -11,6 +11,7 @@
         <background tags='hovered' background='panel-top' hover-hint='~hover-hint'></background>
         <stack>
           <horizontal vertical-fit='Unconstrained' horizontal-fit='MinSize' hover-hint='~hover-hint'>
+            <text text='搜' color='yellow' font-size='3' active='~is-search' align='TopLeft' pref-width='4'></text>
             <image id="coverImage" min-height="8" min-width="8" pref-width="10" pref-height="5" anchor-min-x="0" anchor-min-y="0" anchor-max-x="0" anchor-max-y="1" ></image>
             <vertical horizontal-fit="Unconstrained" min-width="72" child-expand-width="true">
               <text id="songNameText" word-wrapping="false" text="~song-name"></text>
@@ -24,6 +25,7 @@
     <vertical min-width='50' child-expand-width='true' pad='5'>
       <button text='~history-button-text' interactable='~history-button-enable' on-click='history-click' hover-hint='~history-hint' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
       <vertical pad-top='8' pad-bottom='8'>
+        <button id='add-to-queue-button' text='添加到队列' interactable='~add-to-queue-enable' on-click='add-to-queue-click' hover-hint='将所选搜索结果添加到队列尾部' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
         <button text='~skip-button-text' interactable='~skip-button-enable' hover-hint='从队列中删除所选请求' on-click='skip-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
         <button text='~skip-all-button-text' interactable='~skip-all-button-enable' hover-hint='删除队列所有请求' on-click='skip-all-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
         <button text='~blacklist-button-text' interactable='~blacklist-button-enable' hover-hint='屏蔽所选的歌曲' on-click='blacklist-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
