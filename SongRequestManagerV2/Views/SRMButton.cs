@@ -8,6 +8,7 @@ using SongCore;
 using SongRequestManagerV2.Bots;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
+using SongRequestManagerV2.Localizes;
 using SongRequestManagerV2.Statics;
 using SongRequestManagerV2.UI;
 using SongRequestManagerV2.Utils;
@@ -55,6 +56,9 @@ namespace SongRequestManagerV2.Views
         private volatile bool isChangeing = false;
         private bool isInGame = false;
         public Progress<double> DownloadProgress { get; } = new Progress<double>();
+        private bool _hasAdvanced;
+        private double _lastMbps;
+        private string _lastEtaText = "--:--";
 
         public FlowCoordinator Current => this._mainFlowCoordinator.YoungestChildFlowCoordinatorOrSelf();
 
@@ -216,7 +220,15 @@ namespace SongRequestManagerV2.Views
 
         private void Progress_ProgressChanged(object sender, double e)
         {
-            this._requestFlow.ChangeProgressText(e);
+            if (_hasAdvanced)
+            {
+                var text = $"{ResourceWrapper.Get("TEXT_DOWNLOAD_PROGRESS")} - {e * 100:0.00} %  {_lastMbps:0.00} MB/s  ETA {_lastEtaText}";
+                this._requestFlow.ChangeProgressText(text);
+            }
+            else
+            {
+                this._requestFlow.ChangeProgressText(e);
+            }
         }
 
         private void RefreshListRequest(bool obj)
@@ -262,7 +274,31 @@ namespace SongRequestManagerV2.Views
 
                     var songZip = await Plugin.WebClient.DownloadSong($"https://beatsaver.com{k}", System.Threading.CancellationToken.None);
 #endif
-                    var result = await request.DownloadZip(CancellationToken.None, this.DownloadProgress);
+                    // 组装高级进度，显示速度与 ETA
+                    System.Action<SongRequestManagerV2.Networks.DownloadProgressInfo> adv = info =>
+                    {
+                        try
+                        {
+                            var percent = info.Progress * 100.0;
+                            double mbps = info.BytesPerSecond / (1024.0 * 1024.0);
+                            string etaText = "--:--";
+                            if (info.TotalBytes > 0 && info.BytesPerSecond > 1)
+                            {
+                                var remain = info.TotalBytes - info.BytesDownloaded;
+                                var remainSec = remain / info.BytesPerSecond;
+                                var ts = TimeSpan.FromSeconds(remainSec);
+                                etaText = ts.TotalHours >= 1 ? $"{(int)ts.TotalHours:D2}:{ts.Minutes:D2}:{ts.Seconds:D2}" : $"{ts.Minutes:D2}:{ts.Seconds:D2}";
+                            }
+                            _hasAdvanced = true;
+                            _lastMbps = mbps;
+                            _lastEtaText = etaText;
+                            var text = $"{ResourceWrapper.Get("TEXT_DOWNLOAD_PROGRESS")} - {percent:0.00} %  {mbps:0.00} MB/s  ETA {etaText}";
+                            this._requestFlow.ChangeProgressText(text);
+                        }
+                        catch { }
+                    };
+
+                    var result = await request.DownloadZip(CancellationToken.None, this.DownloadProgress, adv);
                     if (result == null) {
                         this._chatManager.QueueChatMessage("无法访问beatsaver");
                     }

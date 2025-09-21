@@ -287,6 +287,14 @@ namespace SongRequestManagerV2.Views
             });
         }
 
+        public void ChangeProgressText(string text)
+        {
+            MainThreadInvoker.Instance.Enqueue(() =>
+            {
+                this.ProgressText = text;
+            });
+        }
+
         public void UpdateRequestUI(bool selectRowCallback = false)
         {
             if (SceneManager.GetActiveScene().name == "GameCore") {
@@ -387,7 +395,7 @@ namespace SongRequestManagerV2.Views
                     Dispatcher.RunOnMainThread(() =>
                     {
                         this._requestTable?.TableView?.ReloadData();
-                        if (!selectRowCallback || this._requestTable?.NumberOfCells() > (uint)this.SelectedRow) {
+                        if (!selectRowCallback || this._requestTable?.TableView?.numberOfCells > (uint)this.SelectedRow) {
                             try {
                                 this._requestTable?.TableView?.SelectCellWithIdx(this.SelectedRow, selectRowCallback);
                                 this._requestTable?.TableView?.ScrollToCellWithIdx(this.SelectedRow, TableView.ScrollPositionType.Center, true);

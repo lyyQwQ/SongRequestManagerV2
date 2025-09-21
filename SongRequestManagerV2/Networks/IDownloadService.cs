@@ -1,4 +1,5 @@
 using System;
+using SongRequestManagerV2.Networks;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,7 +12,6 @@ namespace SongRequestManagerV2.Networks
 
         Task<byte[]> DownloadImage(string url, CancellationToken token, IProgress<double> progress = null);
 
-        Task<byte[]> DownloadZip(string url, CancellationToken token, IProgress<double> progress = null);
+        Task<byte[]> DownloadZip(string url, CancellationToken token, IProgress<double> progress = null, Action<DownloadProgressInfo> advanced = null);
     }
 }
-

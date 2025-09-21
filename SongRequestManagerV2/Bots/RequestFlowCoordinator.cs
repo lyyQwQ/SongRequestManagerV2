@@ -61,6 +61,11 @@ namespace SongRequestManagerV2
             this._requestBotListViewController.ChangeProgressText(value);
         }
 
+        public void ChangeProgressText(string value)
+        {
+            this._requestBotListViewController.ChangeProgressText(value);
+        }
+
         protected override void DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
         {
             if (firstActivation) {

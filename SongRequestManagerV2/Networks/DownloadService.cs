@@ -62,12 +62,12 @@ namespace SongRequestManagerV2.Networks
             }
         }
 
-        public async Task<byte[]> DownloadZip(string url, CancellationToken token, IProgress<double> progress = null)
+        public async Task<byte[]> DownloadZip(string url, CancellationToken token, IProgress<double> progress = null, Action<DownloadProgressInfo> advanced = null)
         {
             await _zipSemaphore.WaitAsync(token).ConfigureAwait(false);
             try
             {
-                var resp = await SendUnityRequestInternal(HttpMethod.Get, url, token, progress, retry: true).ConfigureAwait(false);
+                var resp = await SendUnityRequestInternal(HttpMethod.Get, url, token, progress, retry: true, advanced: advanced).ConfigureAwait(false);
                 if (resp?.IsSuccessStatusCode == true)
                 {
                     return resp.ContentToBytes();
@@ -80,7 +80,7 @@ namespace SongRequestManagerV2.Networks
             }
         }
 
-        private async Task<WebResponse> SendUnityRequestInternal(HttpMethod methodType, string url, CancellationToken token, IProgress<double> progress, bool retry)
+        private async Task<WebResponse> SendUnityRequestInternal(HttpMethod methodType, string url, CancellationToken token, IProgress<double> progress, bool retry, Action<DownloadProgressInfo> advanced = null)
         {
             var maxRetries = retry ? 5 : 1;
             var retryDelay = 1000;
@@ -103,7 +103,7 @@ namespace SongRequestManagerV2.Networks
                             uwr.SetRequestHeader("X-API-Key", "song-request-manager-estrella-20241006");
                             Logger.Info("使用测试中转服务器");
                         }
-                        StartCoroutine(RunRequest(uwr, tcs, progress, token));
+                        StartCoroutine(RunRequest(uwr, tcs, progress, token, advanced));
                     });
 
                     using (token.Register(() => tcs.TrySetCanceled()))
@@ -136,11 +136,12 @@ namespace SongRequestManagerV2.Networks
             return null;
         }
 
-        private System.Collections.IEnumerator RunRequest(UnityWebRequest uwr, TaskCompletionSource<UnityWebRequest> tcs, IProgress<double> progress, CancellationToken token)
+        private System.Collections.IEnumerator RunRequest(UnityWebRequest uwr, TaskCompletionSource<UnityWebRequest> tcs, IProgress<double> progress, CancellationToken token, Action<DownloadProgressInfo> advanced)
         {
             var operation = uwr.SendWebRequest();
             var stopwatch = new System.Diagnostics.Stopwatch();
             stopwatch.Start();
+            double lastReport = 0.0;
 
             while (!operation.isDone)
             {
@@ -152,6 +153,38 @@ namespace SongRequestManagerV2.Networks
                 }
 
                 progress?.Report(uwr.downloadProgress);
+                // 每 0.25s 节流一次高级进度上报
+                if (advanced != null)
+                {
+                    var elapsed = stopwatch.Elapsed.TotalSeconds;
+                    if (elapsed - lastReport >= 0.25)
+                    {
+                        lastReport = elapsed;
+                        long downloaded = (long)uwr.downloadedBytes;
+                        long total = -1;
+                        try
+                        {
+                            var len = uwr.GetResponseHeader("Content-Length");
+                            if (!string.IsNullOrEmpty(len) && long.TryParse(len, out var parsed))
+                            {
+                                total = parsed;
+                            }
+                        }
+                        catch { }
+                        double bps = elapsed > 0 ? downloaded / elapsed : 0;
+                        var info = new DownloadProgressInfo
+                        {
+                            Url = uwr.url,
+                            Progress = uwr.downloadProgress,
+                            BytesDownloaded = downloaded,
+                            TotalBytes = total,
+                            BytesPerSecond = bps,
+                            ElapsedSeconds = elapsed,
+                            Timestamp = DateTime.Now
+                        };
+                        try { advanced?.Invoke(info); } catch { }
+                    }
+                }
                 yield return null;
             }
 
@@ -164,6 +197,33 @@ namespace SongRequestManagerV2.Networks
             else
             {
                 progress?.Report(1.0);
+                if (advanced != null)
+                {
+                    long downloaded = (long)uwr.downloadedBytes;
+                    long total = -1;
+                    try
+                    {
+                        var len = uwr.GetResponseHeader("Content-Length");
+                        if (!string.IsNullOrEmpty(len) && long.TryParse(len, out var parsed))
+                        {
+                            total = parsed;
+                        }
+                    }
+                    catch { }
+                    var elapsed = stopwatch.Elapsed.TotalSeconds;
+                    double bps = elapsed > 0 ? downloaded / elapsed : 0;
+                    var info = new DownloadProgressInfo
+                    {
+                        Url = uwr.url,
+                        Progress = 1.0,
+                        BytesDownloaded = downloaded,
+                        TotalBytes = total,
+                        BytesPerSecond = bps,
+                        ElapsedSeconds = elapsed,
+                        Timestamp = DateTime.Now
+                    };
+                    try { advanced?.Invoke(info); } catch { }
+                }
                 tcs.TrySetResult(uwr);
             }
         }

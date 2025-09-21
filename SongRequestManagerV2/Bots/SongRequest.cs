@@ -253,7 +253,7 @@ namespace SongRequestManagerV2
             }
         }
 
-        public async Task<byte[]> DownloadZip(CancellationToken token = default(CancellationToken), IProgress<double> progress = null)
+        public async Task<byte[]> DownloadZip(CancellationToken token = default(CancellationToken), IProgress<double> progress = null, System.Action<SongRequestManagerV2.Networks.DownloadProgressInfo> advanced = null)
         {
             const int maxRetries = 4;
             for (int retry = 0; retry < maxRetries; retry++)
@@ -271,16 +271,15 @@ namespace SongRequestManagerV2
                             url = $"{RequestBot.BEATMAPS_CDN_ROOT_URL}/{this._hash.ToLower()}.zip";
                         }
                     }
-                    var response = await WebClient.SendAsyncUnity(HttpMethod.Get, url, token, progress, false);
+                    var bytes = await Networks.DownloadService.Instance.DownloadZip(url, token, progress, advanced);
 
-                    if (response?.IsSuccessStatusCode == true) {
-                        return response.ContentToBytes();
-                    } else {
-                        Logger.Error($"下载失败，重试次数：{retry + 1}，错误：{response.StatusCode}");
+                    if (bytes == null) {
+                        Logger.Error($"下载失败，重试次数：{retry + 1}");
                         if (retry == maxRetries - 1) {
-                            Logger.Error(response.ContentToString());
                             return null;
                         }
+                    } else {
+                        return bytes;
                     }
                 }
                 catch (Exception e) {
