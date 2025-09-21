@@ -2,6 +2,8 @@
 using SongRequestManagerV2.Models;
 using SongRequestManagerV2.SimpleJSON;
 using SongRequestManagerV2.Utils;
+using SongRequestManagerV2.Networks;
+using UnityEngine;
 using UnityEngine;
 
 namespace SongRequestManagerV2.Installer
@@ -24,6 +26,7 @@ namespace SongRequestManagerV2.Installer
             this.Container.BindInterfacesAndSelfTo<NotifySound>().FromNewComponentOn(new GameObject(nameof(NotifySound))).AsSingle();
             this.Container.Bind<ListCollectionManager>().AsSingle();
             this.Container.BindInterfacesAndSelfTo<RequestBot>().AsSingle();
+            this.Container.BindInterfacesAndSelfTo<DownloadService>().FromNewComponentOn(new GameObject(nameof(DownloadService))).AsSingle().NonLazy();
         }
     }
 }

@@ -2,6 +2,7 @@
 using SongRequestManagerV2.SimpleJSON;
 using SongRequestManagerV2.Statics;
 using SongRequestManagerV2.Utils;
+using SongRequestManagerV2.Networks;
 using System;
 using System.Collections;
 using System.IO;
@@ -16,7 +17,7 @@ using UnityEngine.Networking;
 
 namespace SongRequestManagerV2
 {
-    internal class WebResponse
+    public class WebResponse
     {
         public readonly HttpStatusCode StatusCode;
         public readonly string ReasonPhrase;
@@ -255,120 +256,13 @@ namespace SongRequestManagerV2
         // 修改 SendAsyncUnity 方法
         internal static async Task<WebResponse> SendAsyncUnity(HttpMethod methodType, string url, CancellationToken token, IProgress<double> progress = null, bool retry = true)
         {
-            int maxRetries = 1;
-            if (retry) {
-                maxRetries = RETRY_COUNT;
-            }
-            int retryDelay = 1000; // 1秒
-
-            for (int retryCount = 0; retryCount < maxRetries; retryCount++)
+            // 委托给由 Zenject 托管的下载服务（统一在主线程发起 UWR，支持 5 分钟超时与中转策略）
+            if (DownloadService.Instance == null)
             {
-                using (UnityWebRequest uwr = new UnityWebRequest(url, methodType.Method))
-                {
-                    // 设置请求头
-                    uwr.SetRequestHeader("User-Agent", $"SongRequestManagerV2/{Plugin.Version}");
-                    if (RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.EstrellaTest)
-                    {
-                        uwr.SetRequestHeader("X-API-Key", "song-request-manager-estrella-20241006");
-                        Logger.Info("使用测试中转服务器");
-                    }
-
-                    // 根据方法类型设置下载处理器
-                    if (methodType == HttpMethod.Get)
-                    {
-                        uwr.downloadHandler = new DownloadHandlerBuffer();
-                    }
-                    else
-                    {
-                        // 根据需要选择合适的 DownloadHandler
-                        uwr.downloadHandler = new DownloadHandlerBuffer();
-                    }
-
-                    // 创建 TaskCompletionSource
-                    var tcs = new TaskCompletionSource<UnityWebRequest>();
-
-                    // 启动协程并等待完成
-                    CoroutineRunner.Instance.StartCoroutine(RunRequest(uwr, tcs, progress, token));
-
-                    // 等待请求完成或取消
-                    try
-                    {
-                        using (token.Register(() => uwr.Abort()))
-                        {
-                            var completedUwr = await tcs.Task.ConfigureAwait(false);
-
-                            // 创建 WebResponse 对象
-                            var response = new WebResponse(completedUwr, completedUwr.downloadHandler.data);
-                            return response;
-                        }
-                    }
-                    catch (TaskCanceledException)
-                    {
-                        Logger.Error("下载已取消。");
-                        return null;
-                    }
-                    catch (Exception ex)
-                    {
-                        if (retryCount < maxRetries - 1)
-                        {
-                            Logger.Error($"下载失败，正在重试（第{retryCount + 1}次）: {ex.Message}");
-                            await Task.Delay(retryDelay, token);
-                        }
-                        else
-                        {
-                            Logger.Error($"下载失败，已达到最大重试次数: {ex.Message}");
-                            return null;
-                        }
-                    }
-                }
+                Logger.Error("DownloadService.Instance == null，无法发起 UWR 请求");
+                return null;
             }
-
-            return null;
-        }
-
-
-        // 修改 RunRequest 方法
-        private static IEnumerator RunRequest(UnityWebRequest uwr, TaskCompletionSource<UnityWebRequest> tcs, IProgress<double> progress, CancellationToken token)
-        {
-            var request = uwr.SendWebRequest();
-
-            var stopwatch = new System.Diagnostics.Stopwatch();
-            stopwatch.Start();
-
-            while (!request.isDone)
-            {
-                if (token.IsCancellationRequested)
-                {
-                    uwr.Abort();
-                    tcs.TrySetCanceled();
-                    yield break;
-                }
-
-                // 超时控制（例如 15 秒）
-                if (stopwatch.ElapsedMilliseconds > 60000)
-                {
-                    uwr.Abort();
-                    tcs.TrySetException(new TimeoutException("Request timed out."));
-                    yield break;
-                }
-
-                // 报告进度
-                progress?.Report(request.progress);
-
-                yield return null;
-            }
-
-            stopwatch.Stop();
-
-            if (uwr.result == UnityWebRequest.Result.ConnectionError || uwr.result == UnityWebRequest.Result.ProtocolError)
-            {
-                tcs.TrySetException(new Exception(uwr.error));
-            }
-            else
-            {
-                progress?.Report(1.0);
-                tcs.TrySetResult(uwr);
-            }
+            return await DownloadService.Instance.SendAsyncUnity(methodType, url, token, progress, retry).ConfigureAwait(false);
         }
 
     }
