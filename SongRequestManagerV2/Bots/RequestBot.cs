@@ -1023,6 +1023,18 @@ namespace SongRequestManagerV2.Bots
                     if (biliBiliChatUser.GuardLevel > 0)
                         limit += RequestBotConfig.Instance.VipBonusRequests; // Current idea is to give VIP's a bonus over their base subscription class, you can set this to 0 if you like
                 }
+                else if (state.User is InjectedBilibiliUser injectedBilibiliUser)
+                {
+                    if (injectedBilibiliUser.IsFan) {
+                        limit = Math.Max(limit, RequestBotConfig.Instance.SubRequestLimit);
+                    }
+                    if (state.User.IsModerator) {
+                        limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
+                    }
+                    if (injectedBilibiliUser.GuardLevel > 0) {
+                        limit += RequestBotConfig.Instance.VipBonusRequests;
+                    }
+                }
                 else
                 {
                     if (state.User.IsModerator) {
@@ -1118,12 +1130,76 @@ namespace SongRequestManagerV2.Bots
         }
         private void Instance_ReceiveMessege(string obj)
         {
-            var message = new MessageEntity()
-            {
-                Message = obj
+            if (TryHandleDanmujiBridgePayload(obj)) {
+                return;
+            }
+
+            // Fallback: treat it as a local command injected via Bouyomi TCP (bypass queue-open check).
+            this.Parse(this.GetLoginUser(), obj, CmdFlags.Local, "Bouyomi");
+        }
+
+        private bool TryHandleDanmujiBridgePayload(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) {
+                return false;
+            }
+
+            var text = raw.Trim();
+            if (!text.StartsWith("{")) {
+                return false;
+            }
+
+            JSONNode node;
+            try {
+                node = JSON.Parse(text);
+            }
+            catch {
+                return false;
+            }
+
+            if (node == null || !node.IsObject) {
+                return false;
+            }
+
+            var obj = node.AsObject;
+            if (obj == null) {
+                return false;
+            }
+
+            var version = obj["v"].AsInt;
+            if (version != 1) {
+                return false;
+            }
+
+            var uid = obj["uid"].Value ?? "";
+            var msg = obj["msg"].Value ?? "";
+            var uname = obj["uname"].Value ?? "";
+            var isAdmin = obj["isAdmin"].AsBool;
+            var guardLevel = obj["guardLevel"].AsInt;
+
+            if (string.IsNullOrWhiteSpace(uid) || uid == "0") {
+                uid = uname;
+            }
+
+            if (string.IsNullOrWhiteSpace(uid) || string.IsNullOrWhiteSpace(msg)) {
+                return false;
+            }
+
+            var user = new InjectedBilibiliUser {
+                Id = uid,
+                UserName = string.IsNullOrWhiteSpace(uname) ? uid : uname,
+                DisplayName = string.IsNullOrWhiteSpace(uname) ? uid : uname,
+                Color = "#FFFFFFFF",
+                IsBroadcaster = false,
+                IsModerator = isAdmin,
+                IsFan = false,
+                GuardLevel = guardLevel,
+                Badges = Array.Empty<IChatBadge>()
             };
 
-            this.RecievedMessages(message);
+            Logger.Debug($"[DanmujiBridge] {user.UserName}({user.Id}) {msg}");
+            this.Parse(user, msg.Replace("！", "!"), 0, "DanmujiBridge");
+            return true;
         }
 
         #region ChatCommand

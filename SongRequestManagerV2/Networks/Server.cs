@@ -10,6 +10,7 @@ namespace SongRequestManagerV2.Networks
 {
     public class Server : BSBindableBase
     {
+        private const int HeaderSize = 15;
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
         #region // プロパティ
         /// <summary>ポート を取得、設定</summary>
@@ -82,44 +83,71 @@ namespace SongRequestManagerV2.Networks
             try {
                 this._server = new TcpListener(IPAddress.Parse(this.IP), this.Port);
                 this._server.Start();
-                var enc = Encoding.UTF8;
                 await Task.Run(() =>
                 {
                     while (this.IsRunning) {
-                        var client = this._server.AcceptTcpClient();
-                        if (!this.IsRunning) {
+                        TcpClient client = null;
+                        try {
+                            client = this._server.AcceptTcpClient();
+                        }
+                        catch (SocketException) {
+                            if (!this.IsRunning) {
+                                return;
+                            }
+                            throw;
+                        }
+                        catch (ObjectDisposedException) {
                             return;
                         }
 
                         Logger.Debug("Connect Client.");
 
-                        using (var ns = client.GetStream())
-                        using (var ms = new MemoryStream()) {
+                        using (client)
+                        using (var ns = client.GetStream()) {
                             ns.ReadTimeout = 5000;
                             ns.WriteTimeout = 5000;
 
-                            var bytes = new byte[256];
-
-                            do {
-                                var size = ns.Read(bytes, 0, bytes.Length);
-                                if (size == 0) {
-                                    break;
+                            try {
+                                var header = ReadExactly(ns, HeaderSize);
+                                if (header == null || header.Length < HeaderSize) {
+                                    continue;
                                 }
-                                ms.Write(bytes, 0, size);
-                            } while (ns.DataAvailable);
-                            this.ResBytes = ms.GetBuffer();
-                            var encType = this.ResBytes[10];
-                            if (encType == 0) {
-                                enc = Encoding.UTF8;
+
+                                var enc = GetEncodingFromCode(header[10]);
+                                if (enc == null) {
+                                    continue;
+                                }
+
+                                int length;
+                                try {
+                                    length = BitConverter.ToInt32(header, 11);
+                                }
+                                catch {
+                                    continue;
+                                }
+
+                                if (length < 0) {
+                                    continue;
+                                }
+
+                                var body = ReadExactly(ns, length);
+                                if (body == null) {
+                                    continue;
+                                }
+
+                                var packet = new byte[HeaderSize + body.Length];
+                                Buffer.BlockCopy(header, 0, packet, 0, HeaderSize);
+                                if (body.Length > 0) {
+                                    Buffer.BlockCopy(body, 0, packet, HeaderSize, body.Length);
+                                }
+
+                                this.ResBytes = packet;
+                                this.Message = enc.GetString(body, 0, body.Length).Replace("。", "").Replace("\0", "");
+                                Logger.Debug($"{this.Message}");
                             }
-                            else if (encType == 1) {
-                                enc = Encoding.Unicode;
+                            catch (Exception ex) {
+                                Logger.Error(ex);
                             }
-                            else if (encType == 2) {
-                                enc = Encoding.GetEncoding("shift_jis");
-                            }
-                            this.Message = enc.GetString(ms.GetBuffer(), 15, (int)ms.Length).Replace("。", "").Replace("\0", "");
-                            Logger.Debug($"{this.Message}");
                         }
                     }
                 });
@@ -133,6 +161,50 @@ namespace SongRequestManagerV2.Networks
         public void StopServer()
         {
             this.IsRunning = false;
+            try {
+                this._server?.Stop();
+            }
+            catch {
+            }
+        }
+
+        private static Encoding GetEncodingFromCode(byte code)
+        {
+            try {
+                if (code == 0) {
+                    return Encoding.UTF8;
+                }
+                if (code == 1) {
+                    return Encoding.Unicode;
+                }
+                if (code == 2) {
+                    return Encoding.GetEncoding("shift_jis");
+                }
+
+                return null;
+            }
+            catch {
+                return null;
+            }
+        }
+
+        private static byte[] ReadExactly(NetworkStream stream, int length)
+        {
+            if (length <= 0) {
+                return Array.Empty<byte>();
+            }
+
+            var buffer = new byte[length];
+            var offset = 0;
+            while (offset < length) {
+                var read = stream.Read(buffer, offset, length - offset);
+                if (read <= 0) {
+                    return null;
+                }
+                offset += read;
+            }
+
+            return buffer;
         }
         #endregion
         //ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*ﾟ+｡｡+ﾟ*｡+ﾟ ﾟ+｡*
