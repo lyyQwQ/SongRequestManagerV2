@@ -999,48 +999,12 @@ namespace SongRequestManagerV2.Bots
                     RequestTracker.Add(state.User.Id, new RequestUserTracker());
                 }
 
-                var limit = RequestBotConfig.Instance.UserRequestLimit;
-
-                if (state.User is TwitchUser twitchUser) {
-                    if (twitchUser.IsSubscriber) {
-                        limit = Math.Max(limit, RequestBotConfig.Instance.SubRequestLimit);
-                    }
-
-                    if (state.User.IsModerator) {
-                        limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
-                    }
-
-                    if (twitchUser.IsVip) {
-                        limit += RequestBotConfig.Instance.VipBonusRequests; // Current idea is to give VIP's a bonus over their base subscription class, you can set this to 0 if you like
-                    }
-                }
-                else if (state.User is BilibiliChatUser biliBiliChatUser)
-                {
-                    if (biliBiliChatUser.IsFan)
-                        limit = Math.Max(limit, RequestBotConfig.Instance.SubRequestLimit);
-                    if (state.User.IsModerator)
-                        limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
-                    if (biliBiliChatUser.GuardLevel > 0)
-                        limit += RequestBotConfig.Instance.VipBonusRequests; // Current idea is to give VIP's a bonus over their base subscription class, you can set this to 0 if you like
-                }
-                else if (state.User is InjectedBilibiliUser injectedBilibiliUser)
-                {
-                    if (injectedBilibiliUser.IsFan) {
-                        limit = Math.Max(limit, RequestBotConfig.Instance.SubRequestLimit);
-                    }
-                    if (state.User.IsModerator) {
-                        limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
-                    }
-                    if (injectedBilibiliUser.GuardLevel > 0) {
-                        limit += RequestBotConfig.Instance.VipBonusRequests;
-                    }
-                }
-                else
-                {
-                    if (state.User.IsModerator) {
-                        limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
-                    }
-                }
+                var limit = Utility.GetRequestLimit(
+                    state.User,
+                    RequestBotConfig.Instance.UserRequestLimit,
+                    RequestBotConfig.Instance.SubRequestLimit,
+                    RequestBotConfig.Instance.ModRequestLimit,
+                    RequestBotConfig.Instance.VipBonusRequests);
 
                 if (!state.User.IsBroadcaster && RequestTracker[state.User.Id].numRequests >= limit)
                 {
@@ -1140,65 +1104,30 @@ namespace SongRequestManagerV2.Bots
 
         private bool TryHandleDanmujiBridgePayload(string raw)
         {
-            if (string.IsNullOrWhiteSpace(raw)) {
+            var result = DanmujiBridgePayloadParser.TryParse(raw, out var payload, out var reason);
+            if (result == DanmujiBridgeParseResult.NotBridgePayload) {
                 return false;
             }
 
-            var text = raw.Trim();
-            if (!text.StartsWith("{")) {
-                return false;
-            }
-
-            JSONNode node;
-            try {
-                node = JSON.Parse(text);
-            }
-            catch {
-                return false;
-            }
-
-            if (node == null || !node.IsObject) {
-                return false;
-            }
-
-            var obj = node.AsObject;
-            if (obj == null) {
-                return false;
-            }
-
-            var version = obj["v"].AsInt;
-            if (version != 1) {
-                return false;
-            }
-
-            var uid = obj["uid"].Value ?? "";
-            var msg = obj["msg"].Value ?? "";
-            var uname = obj["uname"].Value ?? "";
-            var isAdmin = obj["isAdmin"].AsBool;
-            var guardLevel = obj["guardLevel"].AsInt;
-
-            if (string.IsNullOrWhiteSpace(uid) || uid == "0") {
-                uid = uname;
-            }
-
-            if (string.IsNullOrWhiteSpace(uid) || string.IsNullOrWhiteSpace(msg)) {
-                return false;
+            if (result == DanmujiBridgeParseResult.InvalidBridgePayload) {
+                Logger.Notice($"[DanmujiBridge] Invalid payload rejected: {reason}");
+                return true;
             }
 
             var user = new InjectedBilibiliUser {
-                Id = uid,
-                UserName = string.IsNullOrWhiteSpace(uname) ? uid : uname,
-                DisplayName = string.IsNullOrWhiteSpace(uname) ? uid : uname,
+                Id = payload.UserId,
+                UserName = payload.UserName,
+                DisplayName = payload.UserName,
                 Color = "#FFFFFFFF",
                 IsBroadcaster = false,
-                IsModerator = isAdmin,
-                IsFan = false,
-                GuardLevel = guardLevel,
+                IsModerator = payload.IsAdmin,
+                IsFan = payload.IsFan,
+                GuardLevel = payload.GuardLevel,
                 Badges = Array.Empty<IChatBadge>()
             };
 
-            Logger.Debug($"[DanmujiBridge] {user.UserName}({user.Id}) {msg}");
-            this.Parse(user, msg.Replace("！", "!"), 0, "DanmujiBridge");
+            Logger.Debug($"[DanmujiBridge] {user.UserName}({user.Id}) {payload.Message}");
+            this.Parse(user, payload.Message.Replace("！", "!"), 0, "DanmujiBridge");
             return true;
         }
 

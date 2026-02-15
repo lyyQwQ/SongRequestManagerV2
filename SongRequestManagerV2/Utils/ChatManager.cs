@@ -34,6 +34,7 @@ namespace SongRequestManagerV2.Utils
             this.MultiplexerInstance.OnJoinChannel += this.MultiplexerInstance_OnJoinChannel;
             this.TwitchService = this.MultiplexerInstance.GetTwitchService();
             this.BilibiliService = this.MultiplexerInstance.GetBilibiliService();
+            this.MultiplexerInstance.OnTextMessageReceived -= this.MultiplexerInstance_OnTextMessageReceived;
             this.MultiplexerInstance.OnTextMessageReceived += this.MultiplexerInstance_OnTextMessageReceived;
         }
 
@@ -73,9 +74,11 @@ namespace SongRequestManagerV2.Utils
                 if (disposing) {
                     // TODO: マネージド状態を破棄します (マネージド オブジェクト)
                     Logger.Debug("Dispose call");
-                    this.MultiplexerInstance.OnLogin -= this.MultiplexerInstance_OnLogin;
-                    this.MultiplexerInstance.OnJoinChannel -= this.MultiplexerInstance_OnJoinChannel;
-                    this.MultiplexerInstance.OnTextMessageReceived -= this.MultiplexerInstance_OnTextMessageReceived;
+                    if (this.MultiplexerInstance != null) {
+                        this.MultiplexerInstance.OnLogin -= this.MultiplexerInstance_OnLogin;
+                        this.MultiplexerInstance.OnJoinChannel -= this.MultiplexerInstance_OnJoinChannel;
+                        this.MultiplexerInstance.OnTextMessageReceived -= this.MultiplexerInstance_OnTextMessageReceived;
+                    }
                 }
 
                 // TODO: アンマネージド リソース (アンマネージド オブジェクト) を解放し、ファイナライザーをオーバーライドします

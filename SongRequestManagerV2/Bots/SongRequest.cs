@@ -8,6 +8,8 @@ using SongCore;
 using SongRequestManagerV2.Bases;
 using SongRequestManagerV2.Bots;
 using SongRequestManagerV2.Configuration;
+using SongRequestManagerV2.Extentions;
+using SongRequestManagerV2.Models;
 using SongRequestManagerV2.SimpleJSON;
 using SongRequestManagerV2.Networks;
 using SongRequestManagerV2.Statics;
@@ -235,7 +237,7 @@ namespace SongRequestManagerV2
                 obj.Add("status", new JSONString(this.Status.ToString()));
                 obj.Add("requestInfo", new JSONString(this._requestInfo));
                 obj.Add("time", new JSONString(this.RequestTime.ToFileTime().ToString()));
-                obj.Add("requestor", JSON.Parse(this._requestor.ToJson().ToString()));
+                obj.Add("requestor", JSON.Parse(this._requestor.CustomToJson().ToString()));
                 obj.Add("song", this.SongNode);
                 return obj;
             }
@@ -248,13 +250,52 @@ namespace SongRequestManagerV2
         private IChatUser CreateRequester(JSONObject obj)
         {
             try {
-                var temp = new TwitchUser(obj["requestor"].AsObject.ToString());
-                return temp;
+                var requestorObj = obj["requestor"].AsObject;
+                if (requestorObj == null) {
+                    return new UnknownChatUser("{}");
+                }
+
+                if (IsInjectedBilibiliRequester(requestorObj)) {
+                    return CreateInjectedBilibiliRequester(requestorObj);
+                }
+
+                return new TwitchUser(requestorObj.ToString());
             }
             catch (Exception e) {
                 Logger.Error(e);
                 return new UnknownChatUser(obj["requestor"].AsObject.ToString());
             }
+        }
+
+        private static bool IsInjectedBilibiliRequester(JSONObject requestorObj)
+        {
+            if (requestorObj.HasKey("UserType") && requestorObj["UserType"].Value == nameof(InjectedBilibiliUser)) {
+                return true;
+            }
+
+            if (requestorObj.HasKey(nameof(InjectedBilibiliUser.GuardLevel)) || requestorObj.HasKey(nameof(InjectedBilibiliUser.IsFan))) {
+                return !requestorObj.HasKey("IsSubscriber") && !requestorObj.HasKey("IsVip");
+            }
+
+            return false;
+        }
+
+        private static InjectedBilibiliUser CreateInjectedBilibiliRequester(JSONObject requestorObj)
+        {
+            var userName = requestorObj[nameof(InjectedBilibiliUser.UserName)].Value ?? "";
+            var displayName = requestorObj[nameof(InjectedBilibiliUser.DisplayName)].Value ?? "";
+
+            return new InjectedBilibiliUser {
+                Id = requestorObj[nameof(InjectedBilibiliUser.Id)].Value ?? "",
+                UserName = userName,
+                DisplayName = string.IsNullOrWhiteSpace(displayName) ? userName : displayName,
+                Color = string.IsNullOrWhiteSpace(requestorObj[nameof(InjectedBilibiliUser.Color)].Value) ? "#FFFFFFFF" : requestorObj[nameof(InjectedBilibiliUser.Color)].Value,
+                IsBroadcaster = requestorObj[nameof(InjectedBilibiliUser.IsBroadcaster)].AsBool,
+                IsModerator = requestorObj[nameof(InjectedBilibiliUser.IsModerator)].AsBool,
+                IsFan = requestorObj[nameof(InjectedBilibiliUser.IsFan)].AsBool,
+                GuardLevel = requestorObj[nameof(InjectedBilibiliUser.GuardLevel)].AsInt,
+                Badges = Array.Empty<IChatBadge>()
+            };
         }
 
         public async Task<byte[]> DownloadZip(CancellationToken token = default(CancellationToken), IProgress<double> progress = null, System.Action<SongRequestManagerV2.Networks.DownloadProgressInfo> advanced = null)

@@ -1,6 +1,7 @@
-﻿using ChatCore.Interfaces;
+using ChatCore.Interfaces;
 using ChatCore.Models.Twitch;
 using ChatCore.Models.Bilibili;
+using SongRequestManagerV2.Models;
 using SongRequestManagerV2.SimpleJSON;
 
 namespace SongRequestManagerV2.Extentions
@@ -32,6 +33,12 @@ namespace SongRequestManagerV2.Extentions
             {
                 obj.Add(nameof(biliBiliChatUser.IsFan), biliBiliChatUser.IsFan);
                 obj.Add(nameof(biliBiliChatUser.GuardLevel), biliBiliChatUser.GuardLevel);
+            }
+            if (chatUser is InjectedBilibiliUser injectedBilibiliUser)
+            {
+                obj.Add(nameof(injectedBilibiliUser.IsFan), injectedBilibiliUser.IsFan);
+                obj.Add(nameof(injectedBilibiliUser.GuardLevel), injectedBilibiliUser.GuardLevel);
+                obj.Add("UserType", new JSONString(nameof(InjectedBilibiliUser)));
             }
 
             return obj;

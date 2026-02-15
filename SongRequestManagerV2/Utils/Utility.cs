@@ -3,6 +3,7 @@ using ChatCore.Models.Twitch;
 using ChatCore.Models.Bilibili;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
+using SongRequestManagerV2.Models;
 using SongRequestManagerV2.SimpleJSON;
 using SongRequestManagerV2.Statics;
 using System;
@@ -51,27 +52,43 @@ namespace SongRequestManagerV2.Utils
                 return true; // Not sure if this is the best approach actually, not worth thinking about right now
             }
 
-            if (user.IsModerator & RequestBotConfig.Instance.ModFullRights) {
-                return true;
+            GetUserTierFlags(user, out var isSubscriber, out var isVip);
+            return UserPrivilegeMapper.HasCommandTierRights(
+                user.IsBroadcaster,
+                user.IsModerator,
+                isSubscriber,
+                isVip,
+                botcmd.Flags,
+                RequestBotConfig.Instance.ModFullRights);
+        }
+
+        public static int GetRequestLimit(IChatUser user, int userLimit, int subLimit, int modLimit, int vipBonus)
+        {
+            GetUserTierFlags(user, out var isSubscriber, out var isVip);
+            return UserPrivilegeMapper.ComputeRequestLimit(user.IsBroadcaster, user.IsModerator, isSubscriber, isVip, userLimit, subLimit, modLimit, vipBonus);
+        }
+
+        private static void GetUserTierFlags(IChatUser user, out bool isSubscriber, out bool isVip)
+        {
+            isSubscriber = false;
+            isVip = false;
+
+            if (user is TwitchUser twitchUser) {
+                isSubscriber = twitchUser.IsSubscriber;
+                isVip = twitchUser.IsVip;
+                return;
             }
 
-            if (user.IsBroadcaster & botcmd.Flags.HasFlag(CmdFlags.Broadcaster)) {
-                return true;
+            if (user is BilibiliChatUser biliBiliChatUser) {
+                isSubscriber = biliBiliChatUser.IsFan;
+                isVip = biliBiliChatUser.GuardLevel > 0;
+                return;
             }
 
-            if (user.IsModerator & botcmd.Flags.HasFlag(CmdFlags.Mod)) {
-                return true;
+            if (user is InjectedBilibiliUser injectedBilibiliUser) {
+                isSubscriber = injectedBilibiliUser.IsFan;
+                isVip = injectedBilibiliUser.GuardLevel > 0;
             }
-            
-            if (user is TwitchUser twitchUser && twitchUser.IsSubscriber & botcmd.Flags.HasFlag(CmdFlags.Sub)) {
-                return true;
-            }
-            
-            if (user is TwitchUser twitchUser1 && twitchUser1.IsVip & botcmd.Flags.HasFlag(CmdFlags.VIP)) {
-                return true;
-            }
-
-            return false;
         }
 
         public static string GetStarRating(JSONObject song, bool mode = true)
