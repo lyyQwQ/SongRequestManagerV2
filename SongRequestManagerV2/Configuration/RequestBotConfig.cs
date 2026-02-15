@@ -40,6 +40,8 @@ namespace SongRequestManagerV2.Configuration
         public virtual bool NotifySound { get; set; } = false;
         public virtual int SoundVolume { get; set; } = 50;
         public virtual bool EnableAprilFool { get; set; } = false;
+        [UseConverter(typeof(EnumConverter<BeatsaverServer>))]
+        public virtual BeatsaverServer BeatsaverServer { get; set; } = BeatsaverServer.Beatsaver;
         [UseConverter(typeof(EnumConverter<LinkType>))]
         public virtual LinkType LinkType { get; set; } = LinkType.All;
         public virtual bool EnableStreamerBot { get; set; } = false;

@@ -9,6 +9,7 @@ using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Extentions;
 using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.Localizes;
+using SongRequestManagerV2.Statics;
 using SongRequestManagerV2.Utils;
 using System;
 using System.Collections.Generic;
@@ -41,6 +42,7 @@ namespace SongRequestManagerV2.Views
 
         /// <summary>説明 を取得、設定</summary>
         private string _skipButtonName_;
+        private string _skipAllButtonName_;
         /// <summary>説明 を取得、設定</summary>
         [UIValue("skip-button-text")]
         public string SkipButtonName
@@ -48,6 +50,14 @@ namespace SongRequestManagerV2.Views
             get => this._skipButtonName_ ?? "SKIP";
 
             set => this.SetProperty(ref this._skipButtonName_, value);
+        }
+
+        [UIValue("skip-all-button-text")]
+        public string SkipAllButtonName
+        {
+            get => this._skipAllButtonName_ ?? "SKIP ALL";
+
+            set => this.SetProperty(ref this._skipAllButtonName_, value);
         }
 
         /// <summary>説明 を取得、設定</summary>
@@ -132,6 +142,7 @@ namespace SongRequestManagerV2.Views
 
         /// <summary>説明 を取得、設定</summary>
         private bool _isSkipButtonEnable;
+        private bool _isSkipAllButtonEnable;
         /// <summary>説明 を取得、設定</summary>
         [UIValue("skip-button-enable")]
         public bool IsSkipButtonEnable
@@ -139,6 +150,14 @@ namespace SongRequestManagerV2.Views
             get => this._isSkipButtonEnable;
 
             set => this.SetProperty(ref this._isSkipButtonEnable, value);
+        }
+
+        [UIValue("skip-all-button-enable")]
+        public bool IsSkipAllButtonEnable
+        {
+            get => this._isSkipAllButtonEnable;
+
+            set => this.SetProperty(ref this._isSkipAllButtonEnable, value);
         }
 
         /// <summary>説明 を取得、設定</summary>
@@ -150,6 +169,24 @@ namespace SongRequestManagerV2.Views
             get => this._isBlacklistButtonEnable;
 
             set => this.SetProperty(ref this._isBlacklistButtonEnable, value);
+        }
+
+        private bool _addToQueueEnable;
+        [UIValue("add-to-queue-enable")]
+        public bool AddToQueueEnable
+        {
+            get => this._addToQueueEnable;
+
+            set => this.SetProperty(ref this._addToQueueEnable, value);
+        }
+
+        private string _addToQueueButtonText;
+        [UIValue("add-to-queue-button-text")]
+        public string AddToQueueButtonText
+        {
+            get => this._addToQueueButtonText ?? "ADD TO QUEUE";
+
+            set => this.SetProperty(ref this._addToQueueButtonText, value);
         }
 
         /// <summary>説明 を取得、設定</summary>
@@ -281,6 +318,14 @@ namespace SongRequestManagerV2.Views
             });
         }
 
+        public void ChangeProgressText(string text)
+        {
+            MainThreadInvoker.Instance.Enqueue(() =>
+            {
+                this.ProgressText = text;
+            });
+        }
+
         public void UpdateRequestUI(bool selectRowCallback = false)
         {
             if (SceneManager.GetActiveScene().name == "GameCore") {
@@ -342,7 +387,16 @@ namespace SongRequestManagerV2.Views
                 }
                 this.IsSkipButtonEnable = skipButtonEnabled;
 
+                var skipAllButtonEnabled = toggled;
+                if (toggled && this.IsShowHistory) {
+                    skipAllButtonEnabled = false;
+                }
+                this.IsSkipAllButtonEnable = skipAllButtonEnabled;
+
                 this.IsBlacklistButtonEnable = toggled;
+
+                var addToQueueEnabled = toggled && !this.IsShowHistory && this._bot?.CurrentSong != null && this._bot.CurrentSong.Status == RequestStatus.SongSearch;
+                this.AddToQueueEnable = addToQueueEnabled;
 
                 // history button can be enabled even if others are disabled
                 this.IsHistoryButtonEnable = true;
@@ -350,6 +404,7 @@ namespace SongRequestManagerV2.Views
 
                 this.IsPlayButtonEnable = interactive;
                 this.IsSkipButtonEnable = interactive;
+                this.IsSkipAllButtonEnable = interactive;
                 this.IsBlacklistButtonEnable = interactive;
                 // history button can be enabled even if others are disabled
                 this.IsHistoryButtonEnable = true;
@@ -441,6 +496,24 @@ namespace SongRequestManagerV2.Views
                 this.ShowDialog("Skip Song Warning", $"Skipping {song["songName"].Value} by {song["songAuthorName"].Value}\r\nDo you want to continue?", _onConfirm, () => { this._confirmDialogActive = false; });
             }
         }
+
+        [UIAction("skip-all-click")]
+#pragma warning disable IDE0051 // 使用されていないプライベート メンバーを削除する
+        private void SkipAllButtonClick()
+#pragma warning restore IDE0051 // 使用されていないプライベート メンバーを削除する
+        {
+            if (this._requestTable.NumberOfCells() > 0) {
+                void _onConfirm()
+                {
+                    this._bot.SkipAll();
+                    this._confirmDialogActive = false;
+                }
+
+                this._confirmDialogActive = true;
+                this.ShowDialog("Skip All Song Warning", "Skipping all songs in queue\r\nDo you want to continue?", _onConfirm, () => { this._confirmDialogActive = false; });
+            }
+        }
+
         [UIAction("blacklist-click")]
 #pragma warning disable IDE0051 // 使用されていないプライベート メンバーを削除する
         private void BlacklistButtonClick()
@@ -485,6 +558,16 @@ namespace SongRequestManagerV2.Views
             this._bot.WriteQueueStatusToFile(this._bot.QueueMessage(RequestBotConfig.Instance.RequestQueueOpen));
             this._chatManager.QueueChatMessage(RequestBotConfig.Instance.RequestQueueOpen ? "Queue is open." : "Queue is closed.");
             this.UpdateRequestUI();
+        }
+
+        [UIAction("add-to-queue-click")]
+#pragma warning disable IDE0051 // 使用されていないプライベート メンバーを削除する
+        private void AddToQueueClick()
+#pragma warning restore IDE0051 // 使用されていないプライベート メンバーを削除する
+        {
+            if (this._bot?.CurrentSong != null && this._bot.CurrentSong.Status == RequestStatus.SongSearch && !this.IsShowHistory) {
+                this._bot.AddSearchResultToQueue(this._bot.CurrentSong);
+            }
         }
 
         [UIAction("selected-cell")]
@@ -611,6 +694,22 @@ namespace SongRequestManagerV2.Views
                 try {
                     #region Skip button
                     this.SkipButtonName = ResourceWrapper.Get("BUTTON_SKIP");
+                    #endregion
+                }
+                catch (Exception e) {
+                    Logger.Error(e);
+                }
+                try {
+                    #region Skip all button
+                    this.SkipAllButtonName = ResourceWrapper.Get("BUTTON_SKIP_ALL");
+                    #endregion
+                }
+                catch (Exception e) {
+                    Logger.Error(e);
+                }
+                try {
+                    #region Add to queue button
+                    this.AddToQueueButtonText = ResourceWrapper.Get("BUTTON_ADD_TO_QUEUE");
                     #endregion
                 }
                 catch (Exception e) {

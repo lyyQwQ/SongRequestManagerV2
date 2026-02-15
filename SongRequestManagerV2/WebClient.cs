@@ -1,4 +1,5 @@
-﻿using SongRequestManagerV2.SimpleJsons;
+using SongRequestManagerV2.SimpleJsons;
+using SongRequestManagerV2.Networks;
 using System;
 using System.IO;
 using System.Net;
@@ -7,10 +8,11 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine.Networking;
 
 namespace SongRequestManagerV2
 {
-    internal class WebResponse
+    public class WebResponse
     {
         public readonly HttpStatusCode StatusCode;
         public readonly string ReasonPhrase;
@@ -27,6 +29,15 @@ namespace SongRequestManagerV2
             this.Headers = resp.Headers;
             this.RequestMessage = resp.RequestMessage;
             this.IsSuccessStatusCode = resp.IsSuccessStatusCode;
+
+            this._content = body;
+        }
+
+        internal WebResponse(UnityWebRequest uwr, byte[] body)
+        {
+            this.StatusCode = (HttpStatusCode)uwr.responseCode;
+            this.ReasonPhrase = uwr.error;
+            this.IsSuccessStatusCode = uwr.result == UnityWebRequest.Result.Success;
 
             this._content = body;
         }
@@ -83,7 +94,7 @@ namespace SongRequestManagerV2
         internal static async Task<WebResponse> GetAsync(string url, CancellationToken token)
         {
             try {
-                return await SendAsync(HttpMethod.Get, url, token);
+                return await SendAsyncUnity(HttpMethod.Get, url, token);
             }
             catch (Exception e) {
                 Logger.Error(e);
@@ -94,7 +105,7 @@ namespace SongRequestManagerV2
         internal static async Task<byte[]> DownloadImage(string url, CancellationToken token)
         {
             try {
-                var response = await SendAsync(HttpMethod.Get, url, token);
+                var response = await SendAsyncUnity(HttpMethod.Get, url, token);
                 return response?.IsSuccessStatusCode == true ? response.ContentToBytes() : null;
             }
             catch (Exception e) {
@@ -117,7 +128,7 @@ namespace SongRequestManagerV2
                 hash = $"https://cdn.beatsaver.com/{hash}.zip";
             }
             try {
-                var response = await SendAsync(HttpMethod.Get, hash, token, progress: progress);
+                var response = await SendAsyncUnity(HttpMethod.Get, hash, token, progress: progress);
 
                 return response?.IsSuccessStatusCode == true ? response.ContentToBytes() : null;
             }
@@ -191,6 +202,16 @@ namespace SongRequestManagerV2
                 Logger.Error(e);
                 throw;
             }
+        }
+
+        internal static async Task<WebResponse> SendAsyncUnity(HttpMethod methodType, string url, CancellationToken token, IProgress<double> progress = null, bool retry = true)
+        {
+            if (DownloadService.Instance == null) {
+                Logger.Error("DownloadService.Instance == null，无法发起 UWR 请求");
+                return null;
+            }
+
+            return await DownloadService.Instance.SendAsyncUnity(methodType, url, token, progress, retry).ConfigureAwait(false);
         }
     }
 }

@@ -120,6 +120,9 @@
   <data name="BUTTON_BLACK_LIST" xml:space="preserve">
     <value>あかんリスト</value>
   </data>
+  <data name="BUTTON_ADD_TO_QUEUE" xml:space="preserve">
+    <value>きゅーに追加するで</value>
+  </data>
   <data name="BUTTON_HISTORY" xml:space="preserve">
     <value>ひすとりーみますわ</value>
   </data>
@@ -140,6 +143,9 @@
   </data>
   <data name="BUTTON_SKIP" xml:space="preserve">
     <value>とばすわ</value>
+  </data>
+  <data name="BUTTON_SKIP_ALL" xml:space="preserve">
+    <value>ぜんぶとばすわ</value>
   </data>
   <data name="BUTTON_SRM_UPDATE" xml:space="preserve">
     <value>アップデート</value>

@@ -61,8 +61,40 @@ namespace SongRequestManagerV2.Bots
         private static readonly Regex s_beatSaverRegex = new Regex("^[0-9]+-[0-9]+$", RegexOptions.Compiled);
 
         public const string SCRAPED_SCORE_SABER_ALL_JSON_URL = "https://cdn.wes.cloud/beatstar/bssb/v2-ranked.json";
-        public const string BEATMAPS_API_ROOT_URL = "https://api.beatsaver.com";
-        public const string BEATMAPS_CDN_ROOT_URL = "https://cdn.beatsaver.com";
+        public const string BEATMAPS_ORIGIN_API_ROOT_URL = "https://api.beatsaver.com";
+        public const string BEATMAPS_ORIGIN_CDN_ROOT_URL = "https://cdn.beatsaver.com";
+        public static string BEATMAPS_API_ROOT_URL {
+            get {
+                switch (RequestBotConfig.Instance.BeatsaverServer) {
+                    case BeatsaverServer.Beatsaver:
+                        return BEATMAPS_ORIGIN_API_ROOT_URL;
+                    case BeatsaverServer.BeatSaberChina:
+                        return "https://beatsaver.beatsaberchina.com/api";
+                    case BeatsaverServer.WGzeyu:
+                        return "https://beatsaver.wgzeyu.vip/api";
+                    case BeatsaverServer.EstrellaTest:
+                        return "https://bsr-api.237162.xyz/api";
+                    default:
+                        return BEATMAPS_ORIGIN_API_ROOT_URL;
+                }
+            }
+        }
+        public static string BEATMAPS_CDN_ROOT_URL {
+            get {
+                switch (RequestBotConfig.Instance.BeatsaverServer) {
+                    case BeatsaverServer.Beatsaver:
+                        return BEATMAPS_ORIGIN_CDN_ROOT_URL;
+                    case BeatsaverServer.BeatSaberChina:
+                        return "https://beatsaver-cdn.beatsaberchina.com";
+                    case BeatsaverServer.WGzeyu:
+                        return "https://beatsaver.wgzeyu.vip/cdn";
+                    case BeatsaverServer.EstrellaTest:
+                        return "https://bsr-cdn.237162.xyz/";
+                    default:
+                        return BEATMAPS_ORIGIN_CDN_ROOT_URL;
+                }
+            }
+        }
         public const string BEATMAPS_AS_CDN_ROOT_URL = "https://as.cdn.beatsaver.com";
         public const string BEATMAPS_NA_CDN_ROOT_URL = "https://na.cdn.beatsaver.com";
 
@@ -234,7 +266,9 @@ namespace SongRequestManagerV2.Bots
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 #endif
-            this.Parse(msg.Sender, msg.Message.Replace("！", "!"));
+            if (!this.TryHandleDanmujiBridgePayload(msg.Message)) {
+                this.Parse(msg.Sender, msg.Message.Replace("！", "!"));
+            }
 #if DEBUG
             stopwatch.Stop();
             Logger.Debug($"{stopwatch.ElapsedMilliseconds} ms");
@@ -248,7 +282,9 @@ namespace SongRequestManagerV2.Bots
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 #endif
-            this.Parse(msg.Sender, msg.Message.Replace("！", "!"));
+            if (!this.TryHandleDanmujiBridgePayload(msg.Message)) {
+                this.Parse(msg.Sender, msg.Message.Replace("！", "!"));
+            }
 #if DEBUG
             stopwatch.Stop();
             Logger.Debug($"{stopwatch.ElapsedMilliseconds} ms");
@@ -677,6 +713,58 @@ namespace SongRequestManagerV2.Bots
             this.UpdateRequestUI();
             this.RefreshSongQuere();
         }
+
+        public void SkipAll()
+        {
+            var requests = RequestManager.RequestSongs.ToList();
+            foreach (var request in requests) {
+                this.Skip(request, RequestStatus.Skipped);
+            }
+        }
+
+        public void AddSearchResultToQueue(SongRequest request)
+        {
+            try {
+                if (request == null || request.Status != RequestStatus.SongSearch) {
+                    return;
+                }
+
+                this.SetRequestStatus(request, RequestStatus.Queued);
+
+                var requests = RequestManager.RequestSongs.ToList();
+                _ = requests.Remove(request);
+                var lastQueuedIndex = requests.FindLastIndex(song => song.Status == RequestStatus.Queued);
+                var insertIndex = lastQueuedIndex + 1;
+                if (insertIndex < 0) {
+                    insertIndex = 0;
+                }
+                if (insertIndex > requests.Count) {
+                    insertIndex = requests.Count;
+                }
+                requests.Insert(insertIndex, request);
+
+                RequestManager.RequestSongs.Clear();
+                RequestManager.RequestSongs.AddRange(requests);
+
+                if (!string.IsNullOrEmpty(request.ID)) {
+                    _ = this.ListCollectionManager.Add(s_duplicatelist, request.ID);
+                }
+                this._requestManager.WriteRequest();
+
+                _ = this._textFactory.Create().AddSong(request.SongNode).QueueMessage(StringFormat.AddSongToQueueText.ToString());
+
+                var requestorName = request.Requestor?.UserName ?? "unknown";
+                Logger.Debug($"SRM_QUEUE_ADD id={request.ID} user={requestorName}");
+
+                this.UpdateRequestUI();
+                this.RefreshSongQuere();
+                this.RefreshQueue = true;
+            }
+            catch (Exception ex) {
+                Logger.Error(ex);
+            }
+        }
+
         public string GetBeatSaverId(string request)
         {
             request = this.Normalize.RemoveSymbols(request, this.Normalize.SymbolsNoDash);
@@ -724,26 +812,12 @@ namespace SongRequestManagerV2.Bots
                     RequestTracker.Add(state.User.Id, new RequestUserTracker());
                 }
 
-                var limit = RequestBotConfig.Instance.UserRequestLimit;
-
-                if (state.User is TwitchUser twitchUser) {
-                    if (twitchUser.IsSubscriber) {
-                        limit = Math.Max(limit, RequestBotConfig.Instance.SubRequestLimit);
-                    }
-
-                    if (state.User.IsModerator) {
-                        limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
-                    }
-
-                    if (twitchUser.IsVip) {
-                        limit += RequestBotConfig.Instance.VipBonusRequests; // Current idea is to give VIP's a bonus over their base subscription class, you can set this to 0 if you like
-                    }
-                }
-                else {
-                    if (state.User.IsModerator) {
-                        limit = Math.Max(limit, RequestBotConfig.Instance.ModRequestLimit);
-                    }
-                }
+                var limit = Utility.GetRequestLimit(
+                    state.User,
+                    RequestBotConfig.Instance.UserRequestLimit,
+                    RequestBotConfig.Instance.SubRequestLimit,
+                    RequestBotConfig.Instance.ModRequestLimit,
+                    RequestBotConfig.Instance.VipBonusRequests);
 
                 if (!state.User.IsBroadcaster && RequestTracker[state.User.Id].numRequests >= limit) {
                     _ = RequestBotConfig.Instance.LimitUserRequestsToSession
@@ -828,6 +902,34 @@ namespace SongRequestManagerV2.Bots
 #endif
             // This will be used for all parsing type operations, allowing subcommands efficient access to parse state logic
             _ = this._stateFactory.Create().Setup(user, request, flags, info).ParseCommand();
+        }
+
+        private bool TryHandleDanmujiBridgePayload(string raw)
+        {
+            var result = DanmujiBridgePayloadParser.TryParse(raw, out var payload, out var reason);
+            if (result == DanmujiBridgeParseResult.NotBridgePayload) {
+                return false;
+            }
+
+            if (result == DanmujiBridgeParseResult.InvalidBridgePayload) {
+                Logger.Notice($"[DanmujiBridge] Invalid payload rejected: {reason}");
+                return true;
+            }
+
+            var user = new InjectedBilibiliUser {
+                Id = payload.UserId,
+                UserName = payload.UserName,
+                DisplayName = payload.UserName,
+                Color = "#FFFFFFFF",
+                IsBroadcaster = false,
+                IsModerator = payload.IsAdmin,
+                IsFan = payload.IsFan,
+                GuardLevel = payload.GuardLevel
+            };
+
+            Logger.Debug($"[DanmujiBridge] {user.UserName}({user.Id}) {payload.Message}");
+            this.Parse(user, payload.Message.Replace("！", "!"), 0, "DanmujiBridge");
+            return true;
         }
 
         #region ChatCommand
@@ -2129,20 +2231,53 @@ namespace SongRequestManagerV2.Bots
         public string Backup()
         {
             var now = DateTime.Now;
-            var BackupName = Path.Combine(RequestBotConfig.Instance.BackupPath, $"SRMBACKUP-{now:yyyy-MM-dd-HHmm}.zip");
-            try {
-                if (!Directory.Exists(RequestBotConfig.Instance.BackupPath)) {
-                    _ = Directory.CreateDirectory(RequestBotConfig.Instance.BackupPath);
+            var defaultBackupPath = Path.Combine(Environment.CurrentDirectory, "userdata", "backup");
+            var configuredBackupPath = RequestBotConfig.Instance.BackupPath;
+            var fallbackTried = false;
+            var lastBackupName = string.Empty;
+
+            // First try configured path, then fallback path once if path is invalid/unwritable.
+            foreach (var backupPath in new[] { configuredBackupPath, defaultBackupPath }) {
+                if (string.IsNullOrWhiteSpace(backupPath)) {
+                    continue;
+                }
+                if (fallbackTried && string.Equals(backupPath, configuredBackupPath, StringComparison.OrdinalIgnoreCase)) {
+                    continue;
+                }
+                if (string.Equals(backupPath, defaultBackupPath, StringComparison.OrdinalIgnoreCase)) {
+                    fallbackTried = true;
                 }
 
-                ZipFile.CreateFromDirectory(Plugin.DataPath, BackupName, System.IO.Compression.CompressionLevel.Fastest, true);
-                RequestBotConfig.Instance.LastBackup = now.ToString();
+                lastBackupName = Path.Combine(backupPath, $"SRMBACKUP-{now:yyyy-MM-dd-HHmm}.zip");
+
+                try {
+                    if (!Directory.Exists(backupPath)) {
+                        _ = Directory.CreateDirectory(backupPath);
+                    }
+
+                    ZipFile.CreateFromDirectory(Plugin.DataPath, lastBackupName, System.IO.Compression.CompressionLevel.Fastest, true);
+                    RequestBotConfig.Instance.LastBackup = now.ToString();
+                    RequestBotConfig.Instance.BackupPath = backupPath;
+                    return s_success;
+                }
+                catch (UnauthorizedAccessException ex) {
+                    Logger.Error(ex);
+                }
+                catch (ArgumentException ex) {
+                    Logger.Error(ex);
+                }
+                catch (NotSupportedException ex) {
+                    Logger.Error(ex);
+                }
+                catch (PathTooLongException ex) {
+                    Logger.Error(ex);
+                }
+                catch (IOException ex) {
+                    Logger.Error(ex);
+                }
             }
-            catch (Exception ex) {
-                Logger.Error(ex);
-                return $"Failed to backup to {BackupName}";
-            }
-            return s_success;
+
+            return $"Failed to backup to {lastBackupName}";
         }
         #endregion
 

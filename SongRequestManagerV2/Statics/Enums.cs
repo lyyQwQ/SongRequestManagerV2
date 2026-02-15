@@ -217,6 +217,14 @@ namespace SongRequestManagerV2.Statics
         All
     }
 
+    public enum BeatsaverServer
+    {
+        Beatsaver,
+        BeatSaberChina,
+        WGzeyu,
+        EstrellaTest
+    }
+
     public enum StreamerbotPlatform
     {
         [Description("twitch")]

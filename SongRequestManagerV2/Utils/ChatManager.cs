@@ -1,4 +1,5 @@
-﻿using CatCore;
+using CatCore;
+using CatCore.Logging;
 using CatCore.Models.Twitch.IRC;
 using CatCore.Services.Multiplexer;
 using CatCore.Services.Twitch.Interfaces;
@@ -33,7 +34,7 @@ namespace SongRequestManagerV2.Utils
         {
             Logger.Debug("Initialize call");
             try {
-                this.CoreInstance = CatCoreInstance.Create();
+                this.CoreInstance = CatCoreInstance.Create(this.CatCoreLogHandler);
                 this.MultiplexerInstance = this.CoreInstance.RunAllServices();
                 this.MultiplexerInstance.OnTextMessageReceived += this.MultiplexerInstance_OnTextMessageReceived;
                 this.MultiplexerInstance.OnChatConnected += this.MultiplexerInstance_OnChatConnected;
@@ -48,6 +49,22 @@ namespace SongRequestManagerV2.Utils
             catch (Exception e) {
                 Logger.Error(e);
             }
+        }
+
+        private void CatCoreLogHandler(CustomLogLevel logLevel, string context, string message)
+        {
+            Plugin.Logger.Log(
+                logLevel switch
+                {
+                    CustomLogLevel.Trace => IPA.Logging.Logger.Level.Trace,
+                    CustomLogLevel.Debug => IPA.Logging.Logger.Level.Debug,
+                    CustomLogLevel.Information => IPA.Logging.Logger.Level.Info,
+                    CustomLogLevel.Warning => IPA.Logging.Logger.Level.Warning,
+                    CustomLogLevel.Error => IPA.Logging.Logger.Level.Error,
+                    CustomLogLevel.Critical => IPA.Logging.Logger.Level.Critical,
+                    _ => IPA.Logging.Logger.Level.Debug
+                },
+                $"{context} | {message}");
         }
 
         private void MultiplexerInstance_OnChatConnected(MultiplexedPlatformService obj)
@@ -109,6 +126,9 @@ namespace SongRequestManagerV2.Utils
                     // TODO: マネージド状態を破棄します (マネージド オブジェクト)
                     Logger.Debug("Dispose call");
                     this.MultiplexerInstance.OnTextMessageReceived -= this.MultiplexerInstance_OnTextMessageReceived;
+                    if (this.CoreInstance != null) {
+                        this.CoreInstance.OnLogReceived -= this.CatCoreLogHandler;
+                    }
                     this.WebSocketClient.OnReceivedMessage -= this.OnWebsocketMessageReceived;
                     await this.WebSocketClient.StopClient();
                 }

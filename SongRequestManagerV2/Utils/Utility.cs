@@ -1,7 +1,8 @@
-﻿using CatCore.Models.Shared;
+using CatCore.Models.Shared;
 using CatCore.Models.Twitch.IRC;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
+using SongRequestManagerV2.Models;
 using SongRequestManagerV2.SimpleJsons;
 using SongRequestManagerV2.Statics;
 using System;
@@ -50,11 +51,49 @@ namespace SongRequestManagerV2.Utils
                 return true; // Not sure if this is the best approach actually, not worth thinking about right now
             }
 
+            GetUserTierFlags(user, out var isSubscriber, out var isVip);
             return (user.IsModerator && RequestBotConfig.Instance.ModFullRights)
                 || (user.IsBroadcaster && botcmd.Flags.HasFlag(CmdFlags.Broadcaster))
                 || (user.IsModerator && botcmd.Flags.HasFlag(CmdFlags.Mod))
-                || (user is TwitchUser twitchUser && twitchUser.IsSubscriber && botcmd.Flags.HasFlag(CmdFlags.Sub))
-                || (user is TwitchUser twitchUser1 && twitchUser1.IsVip && botcmd.Flags.HasFlag(CmdFlags.VIP));
+                || (isSubscriber && botcmd.Flags.HasFlag(CmdFlags.Sub))
+                || (isVip && botcmd.Flags.HasFlag(CmdFlags.VIP));
+        }
+
+        public static int GetRequestLimit(IChatUser user, int userLimit, int subLimit, int modLimit, int vipBonus)
+        {
+            var limit = userLimit;
+            GetUserTierFlags(user, out var isSubscriber, out var isVip);
+
+            if (isSubscriber) {
+                limit = Math.Max(limit, subLimit);
+            }
+
+            if (user.IsModerator) {
+                limit = Math.Max(limit, modLimit);
+            }
+
+            if (isVip) {
+                limit += vipBonus;
+            }
+
+            return limit;
+        }
+
+        private static void GetUserTierFlags(IChatUser user, out bool isSubscriber, out bool isVip)
+        {
+            isSubscriber = false;
+            isVip = false;
+
+            if (user is TwitchUser twitchUser) {
+                isSubscriber = twitchUser.IsSubscriber;
+                isVip = twitchUser.IsVip;
+                return;
+            }
+
+            if (user is InjectedBilibiliUser injectedBilibiliUser) {
+                isSubscriber = injectedBilibiliUser.IsFan;
+                isVip = injectedBilibiliUser.GuardLevel > 0;
+            }
         }
 
         public static string GetStarRating(JSONObject song, bool mode = true)

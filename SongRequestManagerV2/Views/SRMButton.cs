@@ -8,6 +8,8 @@ using SongCore;
 using SongRequestManagerV2.Bots;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Interfaces;
+using SongRequestManagerV2.Localizes;
+using SongRequestManagerV2.Networks;
 using SongRequestManagerV2.Statics;
 using SongRequestManagerV2.UI;
 using SongRequestManagerV2.Utils;
@@ -55,6 +57,11 @@ namespace SongRequestManagerV2.Views
         private volatile bool _isChangeing = false;
         private bool _isInGame = false;
         public Progress<double> DownloadProgress { get; } = new Progress<double>();
+        private bool _hasAdvanced;
+        private double _lastMbps;
+        private string _lastEtaText = "--:--";
+        private readonly object _downloadTokenLock = new object();
+        private CancellationTokenSource _downloadTokenSource;
 
         public FlowCoordinator Current => this._mainFlowCoordinator.YoungestChildFlowCoordinatorOrSelf();
 
@@ -180,6 +187,7 @@ namespace SongRequestManagerV2.Views
             this._requestFlow.PlayProcessEvent -= this.ProcessSongRequest;
             this.DownloadProgress.ProgressChanged -= this.Progress_ProgressChanged;
             SceneManager.activeSceneChanged -= this.SceneManager_activeSceneChanged;
+            this.CancelAndDisposeActiveDownloadToken();
             Destroy(this._rootScreenGo);
             base.OnDestroy();
         }
@@ -205,6 +213,12 @@ namespace SongRequestManagerV2.Views
 
         private void Progress_ProgressChanged(object sender, double e)
         {
+            if (this._hasAdvanced) {
+                var text = $"{ResourceWrapper.Get("TEXT_DOWNLOAD_PROGRESS")} - {e * 100:0.00} %  {this._lastMbps:0.00} MB/s  ETA {this._lastEtaText}";
+                this._requestFlow.ChangeProgressText(text);
+                return;
+            }
+
             this._requestFlow.ChangeProgressText(e);
         }
 
@@ -230,6 +244,7 @@ namespace SongRequestManagerV2.Views
                 return;
             }
             await s_downloadSemaphore.WaitAsync();
+            var downloadTokenSource = this.CreateAndSwapDownloadTokenSource();
             try {
                 this._bot.PlayNow = request;
                 if (!fromHistory) {
@@ -244,22 +259,64 @@ namespace SongRequestManagerV2.Views
                 var songHash = request.SongVersion["hash"].Value.ToUpper();
 
                 if (Loader.GetLevelByHash(songHash) == null) {
-                    var result = await request.DownloadZip(CancellationToken.None, this.DownloadProgress);
-                    if (result == null) {
-                        this._chatManager.QueueChatMessage("beatsaver is down now.");
-                    }
-                    using (var zipStream = new MemoryStream(result))
-                    using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Read)) {
+                    this._hasAdvanced = false;
+                    this._lastMbps = 0;
+                    this._lastEtaText = "--:--";
+
+                    Action<DownloadProgressInfo> advanced = info =>
+                    {
                         try {
-                            // open zip archive from memory stream
-                            archive.ExtractToDirectory(currentSongDirectory);
+                            var percent = info.Progress * 100.0;
+                            var mbps = info.BytesPerSecond / (1024.0 * 1024.0);
+                            var etaText = "--:--";
+                            if (info.TotalBytes > 0 && info.BytesPerSecond > 1) {
+                                var remain = info.TotalBytes - info.BytesDownloaded;
+                                var remainSec = remain / info.BytesPerSecond;
+                                var ts = TimeSpan.FromSeconds(remainSec);
+                                etaText = ts.TotalHours >= 1
+                                    ? $"{(int)ts.TotalHours:D2}:{ts.Minutes:D2}:{ts.Seconds:D2}"
+                                    : $"{ts.Minutes:D2}:{ts.Seconds:D2}";
+                            }
+
+                            this._hasAdvanced = true;
+                            this._lastMbps = mbps;
+                            this._lastEtaText = etaText;
+                            var text = $"{ResourceWrapper.Get("TEXT_DOWNLOAD_PROGRESS")} - {percent:0.00} %  {mbps:0.00} MB/s  ETA {etaText}";
+                            this._requestFlow.ChangeProgressText(text);
                         }
-                        catch (Exception e) {
-                            this._chatManager.QueueChatMessage($"Oops! Sorry unable to extract ZIP!");
-                            Logger.Error(e);
-                            return;
+                        catch {
+                        }
+                    };
+
+                    var zipFilePath = await request.DownloadZip(downloadTokenSource.Token, this.DownloadProgress, advanced);
+                    if (string.IsNullOrEmpty(zipFilePath)) {
+                        if (!downloadTokenSource.IsCancellationRequested) {
+                            this._chatManager.QueueChatMessage("beatsaver is down now.");
+                        }
+                        return;
+                    }
+
+                    try {
+                        using (var zipStream = File.OpenRead(zipFilePath))
+                        using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Read)) {
+                            try {
+                                archive.ExtractToDirectory(currentSongDirectory);
+                            }
+                            catch (Exception e) {
+                                this._chatManager.QueueChatMessage($"Oops! Sorry unable to extract ZIP!");
+                                Logger.Error(e);
+                                return;
+                            }
                         }
                     }
+                    finally {
+                        TryDeleteTemporaryZip(zipFilePath);
+                    }
+
+                    if (downloadTokenSource.IsCancellationRequested) {
+                        return;
+                    }
+
                     Dispatcher.RunCoroutine(this.WaitForRefreshAndSchroll(request));
                 }
                 else {
@@ -279,7 +336,80 @@ namespace SongRequestManagerV2.Views
                 Logger.Error(e);
             }
             finally {
+                this.ReleaseDownloadTokenSource(downloadTokenSource);
                 _ = s_downloadSemaphore.Release();
+            }
+        }
+
+        private CancellationTokenSource CreateAndSwapDownloadTokenSource()
+        {
+            var next = new CancellationTokenSource();
+            lock (this._downloadTokenLock) {
+                if (this._downloadTokenSource != null) {
+                    try {
+                        this._downloadTokenSource.Cancel();
+                    }
+                    catch {
+                    }
+
+                    this._downloadTokenSource.Dispose();
+                }
+
+                this._downloadTokenSource = next;
+            }
+
+            return next;
+        }
+
+        private void ReleaseDownloadTokenSource(CancellationTokenSource tokenSource)
+        {
+            if (tokenSource == null) {
+                return;
+            }
+
+            lock (this._downloadTokenLock) {
+                if (ReferenceEquals(this._downloadTokenSource, tokenSource)) {
+                    this._downloadTokenSource = null;
+                }
+            }
+
+            tokenSource.Dispose();
+        }
+
+        private void CancelAndDisposeActiveDownloadToken()
+        {
+            CancellationTokenSource tokenSource = null;
+            lock (this._downloadTokenLock) {
+                tokenSource = this._downloadTokenSource;
+                this._downloadTokenSource = null;
+            }
+
+            if (tokenSource == null) {
+                return;
+            }
+
+            try {
+                tokenSource.Cancel();
+            }
+            catch {
+            }
+
+            tokenSource.Dispose();
+        }
+
+        private static void TryDeleteTemporaryZip(string zipFilePath)
+        {
+            if (string.IsNullOrEmpty(zipFilePath)) {
+                return;
+            }
+
+            try {
+                if (File.Exists(zipFilePath)) {
+                    File.Delete(zipFilePath);
+                }
+            }
+            catch (Exception ex) {
+                Logger.Debug($"删除下载临时 ZIP 失败: {zipFilePath}, {ex.Message}");
             }
         }
 

@@ -1,5 +1,6 @@
-﻿using CatCore.Models.Shared;
+using CatCore.Models.Shared;
 using CatCore.Models.Twitch.IRC;
+using SongRequestManagerV2.Models;
 using SongRequestManagerV2.SimpleJsons;
 
 namespace SongRequestManagerV2.Extentions
@@ -26,6 +27,12 @@ namespace SongRequestManagerV2.Extentions
                 obj.Add(nameof(twitchUser.IsSubscriber), twitchUser.IsSubscriber);
                 obj.Add(nameof(twitchUser.IsTurbo), twitchUser.IsTurbo);
                 obj.Add(nameof(twitchUser.IsVip), twitchUser.IsVip);
+            }
+
+            if (chatUser is InjectedBilibiliUser injectedBilibiliUser) {
+                obj.Add(nameof(injectedBilibiliUser.IsFan), injectedBilibiliUser.IsFan);
+                obj.Add(nameof(injectedBilibiliUser.GuardLevel), injectedBilibiliUser.GuardLevel);
+                obj.Add("UserType", new JSONString(nameof(InjectedBilibiliUser)));
             }
 
             return obj;

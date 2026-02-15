@@ -120,6 +120,9 @@
   <data name="BUTTON_BLACK_LIST" xml:space="preserve">
     <value>BLACK LIST</value>
   </data>
+  <data name="BUTTON_ADD_TO_QUEUE" xml:space="preserve">
+    <value>ADD TO QUEUE</value>
+  </data>
   <data name="BUTTON_HISTORY" xml:space="preserve">
     <value>HISTORY</value>
   </data>
@@ -140,6 +143,9 @@
   </data>
   <data name="BUTTON_SKIP" xml:space="preserve">
     <value>SKIP</value>
+  </data>
+  <data name="BUTTON_SKIP_ALL" xml:space="preserve">
+    <value>SKIP ALL</value>
   </data>
   <data name="BUTTON_SRM_UPDATE" xml:space="preserve">
     <value>Update</value>

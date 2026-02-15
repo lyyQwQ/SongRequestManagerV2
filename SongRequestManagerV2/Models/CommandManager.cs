@@ -70,12 +70,12 @@ namespace SongRequestManagerV2.Models
 
             #region 初期化ごにょごにょ
             if (Utility.IsAprilFool()) {
-                commands.Add(this._commandFactory.Create().Setup("!bsr", "!request", "!add", "!srm", "っ'-')╮").Action(this.Bot.ProcessSongRequest).Help(FlagParameter.Everyone, "usage: %alias%<songname> or <song id>, omit <,>'s. %|%This adds a song to the request queue. Try and be a little specific. You can look up songs on %beatsaver%", s_atleast1));
+                commands.Add(this._commandFactory.Create().Setup("!bsr", "!request", "!add", "!srm", "!sr", "点歌", "っ'-')╮").Action(this.Bot.ProcessSongRequest).Help(FlagParameter.Everyone, "usage: %alias%<songname> or <song id>, omit <,>'s. %|%This adds a song to the request queue. Try and be a little specific. You can look up songs on %beatsaver%", s_atleast1));
             }
             else {
-                commands.Add(this._commandFactory.Create().Setup("!bsr", "!request", "!add", "!srm").Action(this.Bot.ProcessSongRequest).Help(FlagParameter.Everyone, "usage: %alias%<songname> or <song id>, omit <,>'s. %|%This adds a song to the request queue. Try and be a little specific. You can look up songs on %beatsaver%", s_atleast1));
+                commands.Add(this._commandFactory.Create().Setup("!bsr", "!request", "!add", "!srm", "!sr", "点歌").Action(this.Bot.ProcessSongRequest).Help(FlagParameter.Everyone, "usage: %alias%<songname> or <song id>, omit <,>'s. %|%This adds a song to the request queue. Try and be a little specific. You can look up songs on %beatsaver%", s_atleast1));
             }
-            commands.Add(this._commandFactory.Create().Setup("!bsr", "!request", "!add", "!srm").Action(this.Bot.ProcessSongRequest).Help(FlagParameter.Everyone, "usage: %alias%<songname> or <song id>, omit <,>'s. %|%This adds a song to the request queue. Try and be a little specific. You can look up songs on %beatsaver%", s_atleast1));
+            commands.Add(this._commandFactory.Create().Setup("!bsr", "!request", "!add", "!srm", "!sr", "点歌").Action(this.Bot.ProcessSongRequest).Help(FlagParameter.Everyone, "usage: %alias%<songname> or <song id>, omit <,>'s. %|%This adds a song to the request queue. Try and be a little specific. You can look up songs on %beatsaver%", s_atleast1));
             commands.Add(this._commandFactory.Create().Setup("!lookup", "!find").AsyncAction(this.LookupSongs).Help(FlagParameter.Mod | FlagParameter.Sub | FlagParameter.VIP, "usage: %alias%<song name> or <song id>, omit <>'s.%|%Get a list of songs from %beatsaver% matching your search criteria.", s_atleast1));
 
             commands.Add(this._commandFactory.Create().Setup("!link").Action(this.Bot.ShowSongLink).Help(FlagParameter.Everyone, "usage: %alias% %|%... Shows song details, and an %beatsaver% link to the current song", s_nothing));

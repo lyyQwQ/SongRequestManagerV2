@@ -6,6 +6,8 @@ using SongRequestManagerV2.Statics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 using Zenject;
 
 namespace SongRequestManagerV2.Views
@@ -13,6 +15,10 @@ namespace SongRequestManagerV2.Views
     [HotReload]
     public class SongRequestManagerSettings : BSMLAutomaticViewController, IInitializable
     {
+        private const string MainMenuSceneName = "MainMenu";
+        private bool _settingsRegistered;
+        private bool _sceneHooked;
+
         public string ResourceName => "SongRequestManagerV2.Views.SongRequestManagerSettings.bsml";
 
         [UIValue("autopick-first-song")]
@@ -148,6 +154,24 @@ namespace SongRequestManagerV2.Views
 
             set => RequestBotConfig.Instance.PPSearch = value;
         }
+
+        [UIValue("beatsaver-servers")]
+        public List<object> BeatsaverServers { get; } = new List<object>()
+            {
+                BeatsaverServerToChinese(BeatsaverServer.Beatsaver),
+                BeatsaverServerToChinese(BeatsaverServer.BeatSaberChina),
+                BeatsaverServerToChinese(BeatsaverServer.WGzeyu),
+                BeatsaverServerToChinese(BeatsaverServer.EstrellaTest)
+            };
+
+        [UIValue("beatsaver-server")]
+        public string CurrentBeatsaverServer
+        {
+            get => BeatsaverServerToChinese(RequestBotConfig.Instance.BeatsaverServer);
+
+            set => RequestBotConfig.Instance.BeatsaverServer = Enum.GetValues(typeof(BeatsaverServer)).OfType<BeatsaverServer>().FirstOrDefault(x => BeatsaverServerToChinese(x) == value);
+        }
+
         [UIValue("link-types")]
         public List<object> LinkTypes { get; } = new List<object>()
             {
@@ -164,7 +188,90 @@ namespace SongRequestManagerV2.Views
         }
         public void Initialize()
         {
-            BSMLSettings.Instance.AddSettingsMenu("SRM V2", this.ResourceName, this);
+            if (_settingsRegistered)
+            {
+                return;
+            }
+
+            if (IsMainMenu(SceneManager.GetActiveScene()))
+            {
+                TryRegisterSettingsMenu();
+                return;
+            }
+
+            if (_sceneHooked)
+            {
+                return;
+            }
+
+            _sceneHooked = true;
+            SceneManager.activeSceneChanged += OnActiveSceneChanged;
+        }
+
+        private void OnActiveSceneChanged(Scene previousScene, Scene nextScene)
+        {
+            if (!IsMainMenu(nextScene))
+            {
+                return;
+            }
+
+            TryRegisterSettingsMenu();
+        }
+
+        private void TryRegisterSettingsMenu()
+        {
+            if (_settingsRegistered)
+            {
+                UnhookSceneEvent();
+                return;
+            }
+
+            try
+            {
+                BSMLSettings.Instance.AddSettingsMenu("SRM V2", this.ResourceName, this);
+                _settingsRegistered = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[SRM] Settings menu registration deferred failed: {ex.Message}");
+            }
+            finally
+            {
+                UnhookSceneEvent();
+            }
+        }
+
+        private void UnhookSceneEvent()
+        {
+            if (!_sceneHooked)
+            {
+                return;
+            }
+
+            SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+            _sceneHooked = false;
+        }
+
+        private static bool IsMainMenu(Scene scene)
+        {
+            return string.Equals(scene.name, MainMenuSceneName, StringComparison.Ordinal);
+        }
+
+        public static string BeatsaverServerToChinese(BeatsaverServer beatsaverServer)
+        {
+            switch (beatsaverServer)
+            {
+                case BeatsaverServer.Beatsaver:
+                    return "默认(BeatSaver)";
+                case BeatsaverServer.BeatSaberChina:
+                    return "美国(光剑中文社区)";
+                case BeatsaverServer.WGzeyu:
+                    return "香港(WGzeyu)";
+                case BeatsaverServer.EstrellaTest:
+                    return "测试(Estrella)";
+                default:
+                    return "默认(BeatSaver)";
+            }
         }
     }
 }

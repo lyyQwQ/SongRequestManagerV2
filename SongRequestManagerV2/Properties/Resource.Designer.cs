@@ -68,6 +68,15 @@ namespace SongRequestManagerV2.Properties {
                 return ResourceManager.GetString("BUTTON_BLACK_LIST", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   ADD TO QUEUE に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string BUTTON_ADD_TO_QUEUE {
+            get {
+                return ResourceManager.GetString("BUTTON_ADD_TO_QUEUE", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   HISTORY に類似しているローカライズされた文字列を検索します。
@@ -129,6 +138,15 @@ namespace SongRequestManagerV2.Properties {
         internal static string BUTTON_SKIP {
             get {
                 return ResourceManager.GetString("BUTTON_SKIP", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   SKIP ALL に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string BUTTON_SKIP_ALL {
+            get {
+                return ResourceManager.GetString("BUTTON_SKIP_ALL", resourceCulture);
             }
         }
         
