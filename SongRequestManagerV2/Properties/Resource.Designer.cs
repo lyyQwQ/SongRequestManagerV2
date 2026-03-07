@@ -95,6 +95,42 @@ namespace SongRequestManagerV2.Properties {
                 return ResourceManager.GetString("BUTTON_PLAY", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   OPEN に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string BUTTON_OPEN {
+            get {
+                return ResourceManager.GetString("BUTTON_OPEN", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   清空搜索 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string BUTTON_CLEAR_SEARCH {
+            get {
+                return ResourceManager.GetString("BUTTON_CLEAR_SEARCH", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   最新 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string BUTTON_NEWEST {
+            get {
+                return ResourceManager.GetString("BUTTON_NEWEST", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   PP曲 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string BUTTON_RANKED {
+            get {
+                return ResourceManager.GetString("BUTTON_RANKED", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Queue close に類似しているローカライズされた文字列を検索します。
@@ -111,6 +147,24 @@ namespace SongRequestManagerV2.Properties {
         internal static string BUTTON_QUEUE_OPEN {
             get {
                 return ResourceManager.GetString("BUTTON_QUEUE_OPEN", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   不过滤 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string BUTTON_UNFILTERED {
+            get {
+                return ResourceManager.GetString("BUTTON_UNFILTERED", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   搜索 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string BUTTON_SEARCH {
+            get {
+                return ResourceManager.GetString("BUTTON_SEARCH", resourceCulture);
             }
         }
         

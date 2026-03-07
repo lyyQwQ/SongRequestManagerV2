@@ -129,11 +129,29 @@
   <data name="BUTTON_PLAY" xml:space="preserve">
     <value>ほな、やるで</value>
   </data>
+  <data name="BUTTON_OPEN" xml:space="preserve">
+    <value>ひらくで</value>
+  </data>
+  <data name="BUTTON_CLEAR_SEARCH" xml:space="preserve">
+    <value>けんさく消すで</value>
+  </data>
+  <data name="BUTTON_NEWEST" xml:space="preserve">
+    <value>あたらしい順や</value>
+  </data>
+  <data name="BUTTON_RANKED" xml:space="preserve">
+    <value>PP曲や</value>
+  </data>
   <data name="BUTTON_QUEUE_CLOSE" xml:space="preserve">
     <value>とじてまっせ</value>
   </data>
   <data name="BUTTON_QUEUE_OPEN" xml:space="preserve">
     <value>あいてまっせ</value>
+  </data>
+  <data name="BUTTON_UNFILTERED" xml:space="preserve">
+    <value>しぼらんで</value>
+  </data>
+  <data name="BUTTON_SEARCH" xml:space="preserve">
+    <value>けんさく</value>
   </data>
   <data name="BUTTON_REPLAY" xml:space="preserve">
     <value>もういっぺん</value>

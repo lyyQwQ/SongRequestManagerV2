@@ -151,7 +151,7 @@ namespace SongRequestManagerV2.Views
                 (this._rootScreenGo.transform as RectTransform).anchoredPosition = new Vector2(70f, 80f);
                 this._rootScreenGo.transform.localScale = Vector3.one * 2;
                 if (this._button == null) {
-                    this._button = UIHelper.CreateUIButton(this._rootScreenGo.transform as RectTransform, "CancelButton", Vector2.zero, Vector2.zero, this.Action, "OPEN", null) as NoTransitionsButton;
+                    this._button = UIHelper.CreateUIButton(this._rootScreenGo.transform as RectTransform, "CancelButton", Vector2.zero, Vector2.zero, this.Action, this.GetOpenButtonText(), null) as NoTransitionsButton;
                 }
             }
             catch (Exception e) {
@@ -203,12 +203,17 @@ namespace SongRequestManagerV2.Views
                 var externalComponents = this._button.gameObject.GetComponentsInChildren<ExternalComponents>(true).FirstOrDefault();
                 var textMesh = externalComponents.Components.FirstOrDefault(x => x as TextMeshProUGUI) as TextMeshProUGUI;
                 if (textMesh != null) {
-                    textMesh.text = RequestBotConfig.Instance.RequestQueueOpen ? "OPEN" : "CLOSE";
+                    textMesh.text = this.GetOpenButtonText();
                 }
             }
             catch (Exception e) {
                 Logger.Error(e);
             }
+        }
+
+        private string GetOpenButtonText()
+        {
+            return ResourceWrapper.Get("BUTTON_OPEN");
         }
 
         private void Progress_ProgressChanged(object sender, double e)

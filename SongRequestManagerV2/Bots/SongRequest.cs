@@ -101,8 +101,10 @@ namespace SongRequestManagerV2.Bots
 
         private const int s_coverCacheCapacity = 200;
         private static readonly object s_coverCacheLock = new object();
+        private static readonly object s_uiGapLogLock = new object();
         private static readonly Dictionary<string, LinkedListNode<CachedCoverTexture>> s_coverTextureMap = new Dictionary<string, LinkedListNode<CachedCoverTexture>>();
         private static readonly LinkedList<CachedCoverTexture> s_coverTextureLru = new LinkedList<CachedCoverTexture>();
+        private static readonly HashSet<string> s_uiGapLoggedKeys = new HashSet<string>();
 
         private class CachedCoverTexture
         {
@@ -190,11 +192,15 @@ namespace SongRequestManagerV2.Bots
                 try {
                     this._coverImage.enabled = false;
                     var dt = this._textFactory.Create().AddSong(this.SongNode).AddUser(this.Requestor); // Get basic fields
-                    _ = dt.Add("Status", this.Status.ToString());
+                    var requestorDisplayName = NormalizeUserLabel(this.Requestor?.DisplayName);
+                    var requestorUserName = NormalizeUserLabel(this.Requestor?.UserName);
+                    _ = dt.Add("Status", RequestStatusToChinese(this.Status));
                     _ = dt.Add("Info", this.RequestInfo != "" ? " / " + this.RequestInfo : "");
-                    _ = dt.Add("RequestTime", this.RequestTime.ToLocalTime().ToString("hh:mm"));
+                    _ = dt.Add("RequestTime", this.RequestTime.ToLocalTime().ToString("yyyy/MM/dd HH:mm"));
+                    var parsedUser = dt.Parse("%user%", true);
                     this.AuthorName = dt.Parse(StringFormat.QueueListRow2);
                     this.Hint = dt.Parse(StringFormat.SongHintText);
+                    this.MaybeLogUiGapDiagnostics(requestorDisplayName, requestorUserName, parsedUser);
 
                     var imageSet = false;
 
@@ -273,15 +279,20 @@ namespace SongRequestManagerV2.Bots
                     return new GenericChatUser("UnknownUser");
                 }
 
-                var displayName = userObj["DisplayName"].Value;
+                var displayName = NormalizeUserLabel(userObj["DisplayName"].Value);
                 if (string.IsNullOrWhiteSpace(displayName)) {
-                    displayName = userObj["UserName"].Value;
+                    displayName = NormalizeUserLabel(userObj["UserName"].Value);
                 }
                 if (string.IsNullOrWhiteSpace(displayName)) {
-                    displayName = userObj["Id"].Value;
+                    displayName = NormalizeUserLabel(userObj["Id"].Value);
                 }
                 if (string.IsNullOrWhiteSpace(displayName)) {
                     displayName = "UnknownUser";
+                }
+
+                var userName = NormalizeUserLabel(userObj["UserName"].Value);
+                if (HasEdgeWhitespace(userObj["DisplayName"].Value) || HasEdgeWhitespace(userObj["UserName"].Value)) {
+                    Logger.Debug($"[DEBUG_UI_GAP] CreateRequester rawDisplay='{EscapeForLog(userObj["DisplayName"].Value)}' rawUser='{EscapeForLog(userObj["UserName"].Value)}' normalizedDisplay='{EscapeForLog(displayName)}' normalizedUser='{EscapeForLog(userName)}'");
                 }
 
                 var badges = userObj["Badges"].AsArray;
@@ -290,7 +301,7 @@ namespace SongRequestManagerV2.Bots
                     if (isInjectedBilibili) {
                         return new InjectedBilibiliUser {
                             Id = userObj["Id"].Value ?? string.Empty,
-                            UserName = string.IsNullOrWhiteSpace(userObj["UserName"].Value) ? displayName : userObj["UserName"].Value,
+                            UserName = string.IsNullOrWhiteSpace(userName) ? displayName : userName,
                             DisplayName = displayName,
                             Color = string.IsNullOrWhiteSpace(userObj["Color"].Value) ? "#FFFFFFFF" : userObj["Color"].Value,
                             IsBroadcaster = userObj["IsBroadcaster"].AsBool,
@@ -311,7 +322,7 @@ namespace SongRequestManagerV2.Bots
                 }
                 var temp = new TwitchUser(
                     string.IsNullOrWhiteSpace(userObj["Id"].Value) ? displayName : userObj["Id"].Value,
-                    string.IsNullOrWhiteSpace(userObj["UserName"].Value) ? displayName : userObj["UserName"].Value,
+                    string.IsNullOrWhiteSpace(userName) ? displayName : userName,
                     displayName,
                     userObj["Color"].Value,
                     userObj["IsModerator"].AsBool,
@@ -415,6 +426,141 @@ namespace SongRequestManagerV2.Bots
         public class SongRequestFactory : PlaceholderFactory<SongRequest>
         {
 
+        }
+
+        public string RequestStatusToChinese(RequestStatus requestStatus)
+        {
+            switch (requestStatus)
+            {
+                case RequestStatus.Invalid:
+                    return "非法";
+                case RequestStatus.Queued:
+                    return "队列中";
+                case RequestStatus.Blacklisted:
+                    return "已屏蔽";
+                case RequestStatus.Skipped:
+                    return "已跳过";
+                case RequestStatus.Played:
+                    return "已游玩";
+                case RequestStatus.Wrongsong:
+                    return "错误歌曲";
+                case RequestStatus.SongSearch:
+                    return "搜索结果";
+                default:
+                    return requestStatus.ToString();
+            }
+        }
+
+        private static bool HasEdgeWhitespace(string value)
+        {
+            return !string.IsNullOrEmpty(value) && !string.Equals(value, value.Trim(), StringComparison.Ordinal);
+        }
+
+        private static string NormalizeUserLabel(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private static string EscapeForLog(string value)
+        {
+            return value?
+                .Replace("\\", "\\\\")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n")
+                .Replace("\t", "\\t");
+        }
+
+        private void MaybeLogUiGapDiagnostics(string requestorDisplayName, string requestorUserName, string parsedUser)
+        {
+            var logKey = $"{this.ID}|{this.Requestor?.Id}|{this.RequestTime.ToFileTime()}";
+            lock (s_uiGapLogLock) {
+                if (!s_uiGapLoggedKeys.Add(logKey)) {
+                    return;
+                }
+            }
+
+            var requestorType = this.Requestor?.GetType().FullName ?? "<null>";
+            var requestorId = this.Requestor?.Id ?? string.Empty;
+            var hintFirstLine = GetFirstLine(this.Hint);
+            Logger.Debug(
+                $"[DEBUG_UI_GAP] requestId='{EscapeForLog(this.ID)}' " +
+                $"requestorType='{EscapeForLog(requestorType)}' " +
+                $"requestorId='{EscapeForLog(requestorId)}' " +
+                $"display='{EscapeForLog(requestorDisplayName)}' " +
+                $"user='{EscapeForLog(requestorUserName)}' " +
+                $"parsedUser='{EscapeForLog(parsedUser)}' " +
+                $"author='{EscapeForLog(this.AuthorName)}' " +
+                $"hintFirstLine='{EscapeForLog(hintFirstLine)}' " +
+                $"hint='{EscapeForLog(this.Hint)}' " +
+                $"parsedUserCodePoints='{DescribeCharacters(parsedUser, 32)}' " +
+                $"hintFirstLineCodePoints='{DescribeCharacters(hintFirstLine, 64)}' " +
+                $"parsedUserHasControl={ContainsControlChars(parsedUser)} " +
+                $"hintHasControl={ContainsControlChars(this.Hint)} " +
+                $"parsedUserHasRichText={ContainsRichTextTag(parsedUser)} " +
+                $"hintHasRichText={ContainsRichTextTag(this.Hint)}");
+        }
+
+        private static string GetFirstLine(string value)
+        {
+            if (string.IsNullOrEmpty(value)) {
+                return string.Empty;
+            }
+
+            var newlineIndex = value.IndexOfAny(new[] { '\r', '\n' });
+            return newlineIndex < 0 ? value : value.Substring(0, newlineIndex);
+        }
+
+        private static bool ContainsControlChars(string value)
+        {
+            return !string.IsNullOrEmpty(value) && value.Any(char.IsControl);
+        }
+
+        private static bool ContainsRichTextTag(string value)
+        {
+            return !string.IsNullOrEmpty(value)
+                && value.IndexOf('<') >= 0
+                && value.IndexOf('>') >= 0;
+        }
+
+        private static string DescribeCharacters(string value, int maxChars)
+        {
+            if (string.IsNullOrEmpty(value)) {
+                return "<empty>";
+            }
+
+            var builder = new StringBuilder();
+            var take = Math.Min(value.Length, maxChars);
+            for (var i = 0; i < take; i++) {
+                var c = value[i];
+                if (builder.Length > 0) {
+                    _ = builder.Append(' ');
+                }
+
+                _ = builder.Append($"{DescribeVisibleChar(c)}(U+{(int)c:X4})");
+            }
+
+            if (value.Length > maxChars) {
+                _ = builder.Append(" ...");
+            }
+
+            return builder.ToString();
+        }
+
+        private static string DescribeVisibleChar(char c)
+        {
+            switch (c)
+            {
+                case ' ':
+                    return "<sp>";
+                case '\t':
+                    return "<tab>";
+                case '\r':
+                    return "<cr>";
+                case '\n':
+                    return "<lf>";
+                default:
+                    return char.IsControl(c) ? $"<ctrl:{(int)c:X2}>" : c.ToString();
+            }
         }
     }
 }

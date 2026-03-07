@@ -30,7 +30,15 @@ namespace SongRequestManagerV2.Bots
         public DynamicText AddUser(IChatUser user)
         {
             try {
-                _ = this.Add("user", user.DisplayName);
+                var rawDisplayName = user?.DisplayName ?? string.Empty;
+                var rawUserName = user?.UserName ?? string.Empty;
+                var normalizedDisplayName = NormalizeUserLabel(rawDisplayName);
+                var normalizedUserName = NormalizeUserLabel(rawUserName);
+                var resolvedDisplayName = !string.IsNullOrEmpty(normalizedDisplayName) ? normalizedDisplayName : normalizedUserName;
+                if (HasEdgeWhitespace(rawDisplayName) || HasEdgeWhitespace(rawUserName)) {
+                    Logger.Debug($"[DEBUG_UI_GAP] AddUser rawDisplay='{EscapeForLog(rawDisplayName)}' rawUser='{EscapeForLog(rawUserName)}' normalized='{EscapeForLog(resolvedDisplayName)}'");
+                }
+                _ = this.Add("user", resolvedDisplayName);
             }
             catch {
                 // Don't care. Twitch user doesn't HAVE to be defined.
@@ -191,6 +199,25 @@ namespace SongRequestManagerV2.Bots
                 _ = dt.Add("LF", "\n"); // Allow carriage return
                 return dt;
             }
+        }
+
+        private static bool HasEdgeWhitespace(string value)
+        {
+            return !string.IsNullOrEmpty(value) && !string.Equals(value, value.Trim(), StringComparison.Ordinal);
+        }
+
+        private static string NormalizeUserLabel(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private static string EscapeForLog(string value)
+        {
+            return value?
+                .Replace("\\", "\\\\")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n")
+                .Replace("\t", "\\t");
         }
     }
 }

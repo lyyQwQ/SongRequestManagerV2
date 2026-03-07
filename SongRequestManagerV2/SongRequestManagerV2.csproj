@@ -222,6 +222,7 @@
   </ItemGroup>
   <ItemGroup>
     <OutputCopy Include="$(OutputPath)SongRequestManagerV2.dll" OutputPath="Plugins\SongRequestManagerV2.dll" />
+    <OutputCopy Include="$(TargetDir)$(TargetName).pdb" OutputPath="Plugins\SongRequestManagerV2.pdb" />
     <OutputCopy Include="Sound\NotifySound.wav" OutputPath="UserData\Song Request ManagerV2\NotifySound\NotifySound.wav" />
   </ItemGroup>
   <ItemGroup>

@@ -30,12 +30,12 @@
       <button text='~history-button-text' interactable='~history-button-enable' on-click='history-click' hover-hint='~history-hint' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
       <vertical pad-top='8' pad-bottom='8'>
         <button id='add-to-queue-button' text='~add-to-queue-button-text' interactable='~add-to-queue-enable' on-click='add-to-queue-click' hover-hint='将所选搜索结果添加到队列尾部' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
-        <button text='~skip-button-text' interactable='~skip-button-enable' hover-hint='Remove the selected request from the queue.' on-click='skip-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
-        <button text='~skip-all-button-text' interactable='~skip-all-button-enable' hover-hint='Remove all requests from the queue.' on-click='skip-all-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
-        <button text='~blacklist-button-text' interactable='~blacklist-button-enable' hover-hint='Block the selected request from being queued in the future.' on-click='blacklist-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
-        <button id='play-button' text='~play-button-text' interactable='~play-button-enable' hover-hint='Download and scroll to the currently selected request.' on-click='play-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
+        <button text='~skip-button-text' interactable='~skip-button-enable' hover-hint='将当前选中的点歌从队列中移除' on-click='skip-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
+        <button text='~skip-all-button-text' interactable='~skip-all-button-enable' hover-hint='清空当前点歌队列' on-click='skip-all-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
+        <button text='~blacklist-button-text' interactable='~blacklist-button-enable' hover-hint='阻止当前选中歌曲再次进入队列' on-click='blacklist-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
+        <button id='play-button' text='~play-button-text' interactable='~play-button-enable' hover-hint='下载并定位到当前选中的点歌' on-click='play-click' anchor-min-x='0' anchor-min-y='0' anchor-max-x='1' anchor-max-y='1' min-width='32' active='~is-active-button'></button>
       </vertical>
-      <button id='queue-button' text='~queue-button-text' hover-hint='Open/Close the queue.' on-click='queue-click' min-width='32' active='~is-active-button'></button>
+      <button id='queue-button' text='~queue-button-text' hover-hint='开启或关闭点歌队列' on-click='queue-click' min-width='32' active='~is-active-button'></button>
     </vertical>
   </horizontal>
   <modal id="modal" show-event='open-modal' hide-event='close-modal' clickerino-offerino-closerino="false" size-delta-x='90' size-delta-y='45' move-to-center='true'>
@@ -47,8 +47,8 @@
     <vertical child-align='LowerCenter' horizontal-fit='Unconstrained' pad-top='10'>
       <text text='~message' align='Center' anchor-min-y='0'></text>
       <horizontal child-align='LowerCenter'>
-        <button on-click='yes-click' text='Yes'></button>
-        <button on-click='no-click' text='No'></button>
+        <button on-click='yes-click' text='确定'></button>
+        <button on-click='no-click' text='取消'></button>
       </horizontal>
     </vertical>
   </modal>

@@ -36,6 +36,7 @@ namespace SongRequestManagerV2.Configuration
         public virtual string LastBackup { get; set; } = DateTime.MinValue.ToString();
         public virtual string BackupPath { get; set; } = Path.Combine(Environment.CurrentDirectory, "userdata", "backup");
         public virtual bool PPSearch { get; set; } = true;
+        public virtual bool FeedbackText { get; set; } = true;
         public virtual bool PerformanceMode { get; set; } = false;
         public virtual bool NotifySound { get; set; } = false;
         public virtual int SoundVolume { get; set; } = 50;

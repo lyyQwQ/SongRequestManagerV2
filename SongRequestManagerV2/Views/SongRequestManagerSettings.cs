@@ -155,36 +155,43 @@ namespace SongRequestManagerV2.Views
             set => RequestBotConfig.Instance.PPSearch = value;
         }
 
+        [UIValue("feedback-text")]
+        public bool FeedbackText
+        {
+            get => RequestBotConfig.Instance.FeedbackText;
+
+            set => RequestBotConfig.Instance.FeedbackText = value;
+        }
+
         [UIValue("beatsaver-servers")]
         public List<object> BeatsaverServers { get; } = new List<object>()
             {
                 BeatsaverServerToChinese(BeatsaverServer.Beatsaver),
-                BeatsaverServerToChinese(BeatsaverServer.BeatSaberChina),
-                BeatsaverServerToChinese(BeatsaverServer.WGzeyu),
                 BeatsaverServerToChinese(BeatsaverServer.EstrellaTest)
             };
 
         [UIValue("beatsaver-server")]
         public string CurrentBeatsaverServer
         {
-            get => BeatsaverServerToChinese(RequestBotConfig.Instance.BeatsaverServer);
+            get => BeatsaverServerToChinese(NormalizeBeatsaverServer(RequestBotConfig.Instance.BeatsaverServer));
 
-            set => RequestBotConfig.Instance.BeatsaverServer = Enum.GetValues(typeof(BeatsaverServer)).OfType<BeatsaverServer>().FirstOrDefault(x => BeatsaverServerToChinese(x) == value);
+            set => RequestBotConfig.Instance.BeatsaverServer = NormalizeBeatsaverServer(
+                Enum.GetValues(typeof(BeatsaverServer)).OfType<BeatsaverServer>().FirstOrDefault(x => BeatsaverServerToChinese(x) == value));
         }
 
         [UIValue("link-types")]
         public List<object> LinkTypes { get; } = new List<object>()
             {
-                LinkType.OnlyRequest.ToString(),
-                LinkType.All.ToString()
+                LinkTypeToChinese(LinkType.OnlyRequest),
+                LinkTypeToChinese(LinkType.All)
             };
 
         [UIValue("link-type")]
-        public string Current
+        public string CurrentLinkType
         {
-            get => RequestBotConfig.Instance.LinkType.ToString();
+            get => LinkTypeToChinese(RequestBotConfig.Instance.LinkType);
 
-            set => RequestBotConfig.Instance.LinkType = Enum.GetValues(typeof(LinkType)).OfType<LinkType>().FirstOrDefault(x => x.ToString() == value);
+            set => RequestBotConfig.Instance.LinkType = Enum.GetValues(typeof(LinkType)).OfType<LinkType>().FirstOrDefault(x => LinkTypeToChinese(x) == value);
         }
         public void Initialize()
         {
@@ -257,20 +264,41 @@ namespace SongRequestManagerV2.Views
             return string.Equals(scene.name, MainMenuSceneName, StringComparison.Ordinal);
         }
 
+        public static string LinkTypeToChinese(LinkType linkType)
+        {
+            switch (linkType)
+            {
+                case LinkType.OnlyRequest:
+                    return "仅点歌";
+                case LinkType.All:
+                    return "全部";
+                default:
+                    return "全部";
+            }
+        }
+
         public static string BeatsaverServerToChinese(BeatsaverServer beatsaverServer)
         {
             switch (beatsaverServer)
             {
                 case BeatsaverServer.Beatsaver:
                     return "默认(BeatSaver)";
-                case BeatsaverServer.BeatSaberChina:
-                    return "美国(光剑中文社区)";
-                case BeatsaverServer.WGzeyu:
-                    return "香港(WGzeyu)";
                 case BeatsaverServer.EstrellaTest:
-                    return "测试(Estrella)";
+                    return "中国大陆(Estrella)";
                 default:
                     return "默认(BeatSaver)";
+            }
+        }
+
+        private static BeatsaverServer NormalizeBeatsaverServer(BeatsaverServer beatsaverServer)
+        {
+            switch (beatsaverServer)
+            {
+                case BeatsaverServer.BeatSaberChina:
+                case BeatsaverServer.WGzeyu:
+                    return BeatsaverServer.Beatsaver;
+                default:
+                    return beatsaverServer;
             }
         }
     }

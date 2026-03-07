@@ -35,7 +35,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("play-button-text")]
         public string PlayButtonText
         {
-            get => this._playButtonName_ ?? "PLAY";
+            get => this._playButtonName_ ?? "开始";
 
             set => this.SetProperty(ref this._playButtonName_, value);
         }
@@ -47,7 +47,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("skip-button-text")]
         public string SkipButtonName
         {
-            get => this._skipButtonName_ ?? "SKIP";
+            get => this._skipButtonName_ ?? "跳过";
 
             set => this.SetProperty(ref this._skipButtonName_, value);
         }
@@ -55,7 +55,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("skip-all-button-text")]
         public string SkipAllButtonName
         {
-            get => this._skipAllButtonName_ ?? "SKIP ALL";
+            get => this._skipAllButtonName_ ?? "全部跳过";
 
             set => this.SetProperty(ref this._skipAllButtonName_, value);
         }
@@ -66,7 +66,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("history-button-text")]
         public string HistoryButtonText
         {
-            get => this._historyButtonText_ ?? "HISTORY";
+            get => this._historyButtonText_ ?? "历史";
 
             set => this.SetProperty(ref this._historyButtonText_, value);
         }
@@ -88,7 +88,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("queue-button-text")]
         public string QueueButtonText
         {
-            get => this._queueButtonText ?? "QUEUQ CLOSE";
+            get => this._queueButtonText ?? "队列已关闭";
 
             set => this.SetProperty(ref this._queueButtonText, value);
         }
@@ -99,7 +99,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("blacklist-button-text")]
         public string BlackListButtonText
         {
-            get => this._blacklistButtonText ?? "BLACK LIST";
+            get => this._blacklistButtonText ?? "屏蔽";
 
             set => this.SetProperty(ref this._blacklistButtonText, value);
         }
@@ -113,7 +113,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("progress-text")]
         public string ProgressText
         {
-            get => this._progressText ?? "Download Progress - 0 %";
+            get => this._progressText ?? "下载进度 - 0 %";
 
             set => this.SetProperty(ref this._progressText, value);
         }
@@ -184,7 +184,7 @@ namespace SongRequestManagerV2.Views
         [UIValue("add-to-queue-button-text")]
         public string AddToQueueButtonText
         {
-            get => this._addToQueueButtonText ?? "ADD TO QUEUE";
+            get => this._addToQueueButtonText ?? "添加到队列";
 
             set => this.SetProperty(ref this._addToQueueButtonText, value);
         }
@@ -199,7 +199,7 @@ namespace SongRequestManagerV2.Views
             set => this.SetProperty(ref this._isShowHistory, value);
         }
         [UIValue("version")]
-        public string Version { get => $"<size=120%>Version - {Plugin.Version}"; set { } }
+        public string Version { get => "<size=120%>Version · 20250307"; set { } }
 
         private int SelectedRow => this._bot.CurrentSong == null ? -1 : this.Songs.IndexOf(this._bot.CurrentSong);
 
@@ -493,7 +493,7 @@ namespace SongRequestManagerV2.Views
                 this._confirmDialogActive = true;
 
                 // show dialog
-                this.ShowDialog("Skip Song Warning", $"Skipping {song["songName"].Value} by {song["songAuthorName"].Value}\r\nDo you want to continue?", _onConfirm, () => { this._confirmDialogActive = false; });
+                this.ShowDialog("跳过歌曲确认", $"将跳过 {song["songName"].Value} - {song["songAuthorName"].Value}\r\n是否继续？", _onConfirm, () => { this._confirmDialogActive = false; });
             }
         }
 
@@ -510,7 +510,7 @@ namespace SongRequestManagerV2.Views
                 }
 
                 this._confirmDialogActive = true;
-                this.ShowDialog("Skip All Song Warning", "Skipping all songs in queue\r\nDo you want to continue?", _onConfirm, () => { this._confirmDialogActive = false; });
+                this.ShowDialog("清空队列确认", "将跳过队列中的所有歌曲\r\n是否继续？", _onConfirm, () => { this._confirmDialogActive = false; });
             }
         }
 
@@ -533,7 +533,7 @@ namespace SongRequestManagerV2.Views
                 this._confirmDialogActive = true;
 
                 // show dialog
-                this.ShowDialog("Blacklist Song Warning", $"Blacklisting {song["songName"].Value} by {song["songAuthorName"].Value}\r\nDo you want to continue?", _onConfirm, () => { this._confirmDialogActive = false; });
+                this.ShowDialog("屏蔽歌曲确认", $"将屏蔽 {song["songName"].Value} - {song["songAuthorName"].Value}\r\n是否继续？", _onConfirm, () => { this._confirmDialogActive = false; });
             }
         }
         [UIAction("play-click")]
@@ -556,7 +556,7 @@ namespace SongRequestManagerV2.Views
         {
             RequestBotConfig.Instance.RequestQueueOpen = !RequestBotConfig.Instance.RequestQueueOpen;
             this._bot.WriteQueueStatusToFile(this._bot.QueueMessage(RequestBotConfig.Instance.RequestQueueOpen));
-            this._chatManager.QueueChatMessage(RequestBotConfig.Instance.RequestQueueOpen ? "Queue is open." : "Queue is closed.");
+            this._chatManager.QueueChatMessage(RequestBotConfig.Instance.RequestQueueOpen ? "点歌队列已开启。" : "点歌队列已关闭。");
             this.UpdateRequestUI();
         }
 

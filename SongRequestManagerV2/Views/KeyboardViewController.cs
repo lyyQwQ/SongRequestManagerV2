@@ -1,6 +1,7 @@
 ﻿using BeatSaberMarkupLanguage.ViewControllers;
 using SongRequestManagerV2.Bots;
 using SongRequestManagerV2.Interfaces;
+using SongRequestManagerV2.Localizes;
 using UnityEngine;
 using Zenject;
 
@@ -25,18 +26,23 @@ namespace SongRequestManagerV2.Views
                 var mykeyboard = this._factiry.Create().Setup(KeyboardContainer, "");
                 _ = mykeyboard.AddKeys(Keyboard.QWERTY); // You can replace this with DVORAK if you like
                 _ = mykeyboard.DefaultActions();
-                const string SEARCH = @"
+                var clearSearch = ResourceWrapper.Get("BUTTON_CLEAR_SEARCH");
+                var newest = ResourceWrapper.Get("BUTTON_NEWEST");
+                var ranked = ResourceWrapper.Get("BUTTON_RANKED");
+                var unfiltered = ResourceWrapper.Get("BUTTON_UNFILTERED");
+                var search = ResourceWrapper.Get("BUTTON_SEARCH");
+                var searchButtons = $@"
 
-[CLEAR SEARCH]/0 /2 [NEWEST]/0 /2 [RANKED]/0 /2 [UNFILTERED]/30 /2 [SEARCH]/0";
+[{clearSearch}]/0 /2 [{newest}]/0 /2 [{ranked}]/0 /2 [{unfiltered}]/30 /2 [{search}]/0";
 
                 mykeyboard.SetButtonType("OkButton"); // Adding this alters button positions??! Why?
-                _ = mykeyboard.AddKeys(SEARCH, 0.75f);
+                _ = mykeyboard.AddKeys(searchButtons, 0.75f);
 
-                mykeyboard.SetAction("CLEAR SEARCH", this._bot.ClearSearch);
-                mykeyboard.SetAction("UNFILTERED", this._bot.UnfilteredSearch);
-                mykeyboard.SetAction("SEARCH", this._bot.Search);
-                mykeyboard.SetAction("RANKED", this._bot.PP);
-                mykeyboard.SetAction("NEWEST", this._bot.Newest);
+                mykeyboard.SetAction(clearSearch, this._bot.ClearSearch);
+                mykeyboard.SetAction(unfiltered, this._bot.UnfilteredSearch);
+                mykeyboard.SetAction(search, this._bot.Search);
+                mykeyboard.SetAction(ranked, this._bot.PP);
+                mykeyboard.SetAction(newest, this._bot.Newest);
                 // The UI for this might need a bit of work.
                 mykeyboard.AddKeyboard("RightPanel.kbd");
             }

@@ -118,62 +118,80 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="BUTTON_BLACK_LIST" xml:space="preserve">
-    <value>BLACK LIST</value>
+    <value>屏蔽</value>
   </data>
   <data name="BUTTON_ADD_TO_QUEUE" xml:space="preserve">
-    <value>ADD TO QUEUE</value>
+    <value>添加到队列</value>
   </data>
   <data name="BUTTON_HISTORY" xml:space="preserve">
-    <value>HISTORY</value>
+    <value>历史</value>
   </data>
   <data name="BUTTON_PLAY" xml:space="preserve">
-    <value>PLAY</value>
+    <value>开始</value>
+  </data>
+  <data name="BUTTON_OPEN" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="BUTTON_CLEAR_SEARCH" xml:space="preserve">
+    <value>清空搜索</value>
+  </data>
+  <data name="BUTTON_NEWEST" xml:space="preserve">
+    <value>最新</value>
+  </data>
+  <data name="BUTTON_RANKED" xml:space="preserve">
+    <value>PP曲</value>
   </data>
   <data name="BUTTON_QUEUE_CLOSE" xml:space="preserve">
-    <value>Queue close</value>
+    <value>队列已关闭</value>
   </data>
   <data name="BUTTON_QUEUE_OPEN" xml:space="preserve">
-    <value>Queue open</value>
+    <value>队列已开启</value>
+  </data>
+  <data name="BUTTON_UNFILTERED" xml:space="preserve">
+    <value>不过滤</value>
+  </data>
+  <data name="BUTTON_SEARCH" xml:space="preserve">
+    <value>搜索</value>
   </data>
   <data name="BUTTON_REPLAY" xml:space="preserve">
-    <value>REPLAY</value>
+    <value>重放</value>
   </data>
   <data name="BUTTON_REQUESTS" xml:space="preserve">
-    <value>REQUESTS</value>
+    <value>请求</value>
   </data>
   <data name="BUTTON_SKIP" xml:space="preserve">
-    <value>SKIP</value>
+    <value>跳过</value>
   </data>
   <data name="BUTTON_SKIP_ALL" xml:space="preserve">
-    <value>SKIP ALL</value>
+    <value>全部跳过</value>
   </data>
   <data name="BUTTON_SRM_UPDATE" xml:space="preserve">
-    <value>Update</value>
+    <value>更新</value>
   </data>
   <data name="HOVERHINT_HISTORY" xml:space="preserve">
-    <value>View the history of song requests from the current session.</value>
+    <value>查看当前会话中的点歌历史。</value>
   </data>
   <data name="HOVERHINT_REQUESTS" xml:space="preserve">
-    <value>Go back to your current song request queue.</value>
+    <value>返回当前点歌队列。</value>
   </data>
   <data name="TEXT_DOWNLOAD_PROGRESS" xml:space="preserve">
-    <value>Download Progress</value>
+    <value>下载进度</value>
   </data>
   <data name="TEXT_FLOWCORDINATER_TITLE_HISTORY" xml:space="preserve">
-    <value>Song Request History</value>
+    <value>点歌历史</value>
   </data>
   <data name="TEXT_FLOWCORDINATER_TITLE_QUEUE" xml:space="preserve">
-    <value>Song Request Queue</value>
+    <value>点歌队列</value>
   </data>
   <data name="TEXT_NOTIFY_NEW_UPDATE" xml:space="preserve">
-    <value>A new version exists. 
-Do you want to update? - %NEWVERSION%</value>
+    <value>发现新版本。
+是否现在更新？ - %NEWVERSION%</value>
   </data>
   <data name="TEXT_PEFORMANCE_MODE" xml:space="preserve">
-    <value>PerformanceMode</value>
+    <value>性能模式</value>
   </data>
   <data name="TEXT_UPDATE_SUCCESS" xml:space="preserve">
-    <value>Success.
-Reboot to update to the new version.</value>
+    <value>更新成功。
+重启后即可应用新版本。</value>
   </data>
 </root>

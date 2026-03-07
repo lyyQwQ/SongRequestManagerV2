@@ -68,10 +68,6 @@ namespace SongRequestManagerV2.Bots
                 switch (RequestBotConfig.Instance.BeatsaverServer) {
                     case BeatsaverServer.Beatsaver:
                         return BEATMAPS_ORIGIN_API_ROOT_URL;
-                    case BeatsaverServer.BeatSaberChina:
-                        return "https://beatsaver.beatsaberchina.com/api";
-                    case BeatsaverServer.WGzeyu:
-                        return "https://beatsaver.wgzeyu.vip/api";
                     case BeatsaverServer.EstrellaTest:
                         return "https://bsr-api.237162.xyz/api";
                     default:
@@ -84,10 +80,6 @@ namespace SongRequestManagerV2.Bots
                 switch (RequestBotConfig.Instance.BeatsaverServer) {
                     case BeatsaverServer.Beatsaver:
                         return BEATMAPS_ORIGIN_CDN_ROOT_URL;
-                    case BeatsaverServer.BeatSaberChina:
-                        return "https://beatsaver-cdn.beatsaberchina.com";
-                    case BeatsaverServer.WGzeyu:
-                        return "https://beatsaver.wgzeyu.vip/cdn";
                     case BeatsaverServer.EstrellaTest:
                         return "https://bsr-cdn.237162.xyz/";
                     default:
@@ -338,7 +330,9 @@ namespace SongRequestManagerV2.Bots
                     this.RecievedMessages(genelicChatMessage);
                 }
                 else if (this.ChatManager.SendMessageQueue.TryDequeue(out var message)) {
-                    this.SendChatMessage(message);
+                    if (RequestBotConfig.Instance.FeedbackText) {
+                        this.SendChatMessage(message);
+                    }
                 }
             }
             catch (Exception ex) {
@@ -366,7 +360,7 @@ namespace SongRequestManagerV2.Bots
                 }
                 catch (Exception ex) {
                     Logger.Error(ex);
-                    this.ChatManager.QueueChatMessage("Failed to run Backup");
+                    this.ChatManager.QueueChatMessage("运行备份失败。");
                 }
 
                 try {
@@ -377,7 +371,7 @@ namespace SongRequestManagerV2.Bots
                 }
                 catch (Exception ex) {
                     Logger.Error(ex);
-                    this.ChatManager.QueueChatMessage("Failed to clear played file");
+                    this.ChatManager.QueueChatMessage("清理已游玩记录失败。");
 
                 }
                 this._requestManager.ReadRequest(); // Might added the timespan check for this too. To be decided later.
@@ -399,6 +393,10 @@ namespace SongRequestManagerV2.Bots
 
         private void SendChatMessage(string message)
         {
+            if (string.IsNullOrWhiteSpace(message)) {
+                return;
+            }
+
             try {
                 Logger.Debug($"Sending message: \"{message}\"");
 
@@ -406,6 +404,17 @@ namespace SongRequestManagerV2.Bots
                     foreach (var channel in this.ChatManager.TwitchChannelManagementService.GetAllActiveChannels()) {
                         channel.SendMessage($"{message}");
                     }
+                }
+            }
+            catch (Exception e) {
+                Logger.Error(e);
+            }
+            try {
+                var bilibiliService = this.ChatManager.MultiplexerInstance?.GetBilibiliPlatformService();
+                var bilibiliChannel = bilibiliService?.DefaultChannel;
+                if (bilibiliChannel != null) {
+                    Logger.Debug($"[DEBUG_FEEDBACK_SEND] Echoing SRM feedback to bilibili default channel. channel={bilibiliChannel.Id}");
+                    bilibiliChannel.SendMessage(message);
                 }
             }
             catch (Exception e) {
@@ -491,7 +500,7 @@ namespace SongRequestManagerV2.Bots
                     // Remap song id if entry present. This is one time, and not correct as a result. No recursion right now, could be confusing to the end user.
                     if (s_songremap.ContainsKey(id) && !requestInfo.Flags.HasFlag(CmdFlags.NoFilter)) {
                         request = s_songremap[id];
-                        this.ChatManager.QueueChatMessage($"Remapping request {requestInfo.Request} to {request}");
+                        this.ChatManager.QueueChatMessage($"已将请求 {requestInfo.Request} 重映射为 {request}");
                     }
 
                     var requestcheckmessage = this.IsRequestInQueue(this.Normalize.RemoveSymbols(request, this.Normalize.SymbolsNoDash));               // Check if requested ID is in Queue  
@@ -521,37 +530,37 @@ namespace SongRequestManagerV2.Bots
                 Logger.Debug($"Start get map detial : {stopwatch.ElapsedMilliseconds} ms");
 #endif
                 if (resp == null) {
-                    errorMessage = $"beatsaver is down now.";
+                    errorMessage = "BeatSaver 当前不可用。";
                 }
                 else if (resp.IsSuccessStatusCode) {
                     result = resp.ConvertToJsonNode();
                 }
                 else {
-                    errorMessage = $"Invalid BeatSaver ID \"{request}\" specified. {requestUrl}";
+                    errorMessage = $"无效的 BeatSaver ID：\"{request}\"。{requestUrl}";
                 }
                 var serchString = result != null ? result["id"].Value : "";
                 var songs = this.GetSongListFromResults(result, serchString, SongFilter.none, requestInfo.State.Sort != "" ? requestInfo.State.Sort : StringFormat.AddSortOrder.ToString());
                 var autopick = RequestBotConfig.Instance.AutopickFirstSong || requestInfo.Flags.HasFlag(CmdFlags.Autopick);
                 // Filter out too many or too few results
                 if (!songs.Any()) {
-                    errorMessage = $"No results found for request \"{request}\"";
+                    errorMessage = $"没有找到与 \"{request}\" 对应的结果。";
                 }
                 else if (!autopick && songs.Count >= 4) {
-                    errorMessage = $"Request for '{request}' produces {songs.Count()} results, narrow your search by adding a mapper name, or use https://beatsaver.com to look it up.";
+                    errorMessage = $"\"{request}\" 对应 {songs.Count()} 个结果，请补充作者名缩小范围，或前往 https://beatsaver.com 查找。";
                 }
                 else if (!autopick && songs.Count > 1 && songs.Count < 4) {
                     var msg = this._messageFactroy.Create().SetUp(1, 5);
                     //ToDo: Support Mixer whisper
                     if (requestor is TwitchUser) {
-                        msg.Header($"@{requestor.UserName}, please choose: ");
+                        msg.Header($"@{requestor.UserName}，请选择：");
                     }
                     else {
-                        msg.Header($"@{requestor.UserName}, please choose: ");
+                        msg.Header($"@{requestor.UserName}，请选择：");
                     }
                     foreach (var eachsong in songs) {
                         msg.Add(this._textFactory.Create().AddSong(eachsong).Parse(StringFormat.BsrSongDetail), ", ");
                     }
-                    msg.End("...", $"No matching songs for for {request}");
+                    msg.End("...", $"{request} 没有匹配歌曲。");
                     return;
                 }
                 else {
@@ -690,7 +699,7 @@ namespace SongRequestManagerV2.Bots
             // Add the song to the blacklist
             _ = this.ListCollectionManager.Add(s_banlist, request.ID);
 
-            this.ChatManager.QueueChatMessage($"{request.SongMetaData["songName"].Value} by {request.SongMetaData["songAuthorName"].Value} ({request.SongMetaData["id"].Value}) added to the blacklist.");
+            this.ChatManager.QueueChatMessage($"{request.SongMetaData["songName"].Value} - {request.SongMetaData["songAuthorName"].Value} ({request.SongMetaData["id"].Value}) 已加入屏蔽列表。");
 
             if (!fromHistory) {
                 if (skip) {
@@ -804,7 +813,7 @@ namespace SongRequestManagerV2.Bots
             try {
                 if (RequestBotConfig.Instance.RequestQueueOpen == false && !state.Flags.HasFlag(CmdFlags.NoFilter) && !state.Flags.HasFlag(CmdFlags.Local)) // BUG: Complex permission, Queue state message needs to be handled higher up
                 {
-                    this.ChatManager.QueueChatMessage($"Queue is currently closed.");
+                    this.ChatManager.QueueChatMessage("当前点歌队列已关闭。");
                     return s_success;
                 }
 
@@ -833,7 +842,7 @@ namespace SongRequestManagerV2.Bots
                 var newRequest = new RequestInfo(state.User, state.Parameter, DateTime.UtcNow, s_digitRegex.IsMatch(testrequest) || s_beatSaverRegex.IsMatch(testrequest), state, state.Flags, state.Info);
 
                 if (!newRequest.IsBeatSaverId && state.Parameter.Length < 2) {
-                    this.ChatManager.QueueChatMessage($"Request \"{state.Parameter}\" is too short- Beat Saver searches must be at least 3 characters!");
+                    this.ChatManager.QueueChatMessage($"请求 \"{state.Parameter}\" 太短了，BeatSaver 搜索至少需要 3 个字符。");
                 }
 
                 if (!this.ChatManager.RequestInfos.Contains(newRequest)) {
@@ -1067,7 +1076,7 @@ namespace SongRequestManagerV2.Bots
         public string ClearDuplicateList(ParseState state)
         {
             if (!state._botcmd.Flags.HasFlag(CmdFlags.SilentResult)) {
-                this.ChatManager.QueueChatMessage("Session duplicate list is now clear.");
+                this.ChatManager.QueueChatMessage("本场重复列表已清空。");
             }
 
             this.ListCollectionManager.ClearList(s_duplicatelist);
@@ -1086,7 +1095,7 @@ namespace SongRequestManagerV2.Bots
             var id = this.GetBeatSaverId(state.Parameter.ToLower());
 
             if (this.ListCollectionManager.Contains(s_banlist, id)) {
-                this.ChatManager.QueueChatMessage($"{id} is already on the ban list.");
+                this.ChatManager.QueueChatMessage($"{id} 已经在屏蔽列表中。");
                 return;
             }
 
@@ -1111,7 +1120,7 @@ namespace SongRequestManagerV2.Bots
             _ = this.ListCollectionManager.Add(s_banlist, id);
 
             if (song == null) {
-                this.ChatManager.QueueChatMessage($"{id} is now on the ban list.");
+                this.ChatManager.QueueChatMessage($"{id} 已加入屏蔽列表。");
             }
             else {
                 _ = state.Msg(this._textFactory.Create().AddSong(song.SongObject).Parse(StringFormat.BanSongDetail), ", ");
@@ -1147,11 +1156,11 @@ namespace SongRequestManagerV2.Bots
             var unbanvalue = this.GetBeatSaverId(request);
 
             if (this.ListCollectionManager.Contains(s_banlist, unbanvalue)) {
-                this.ChatManager.QueueChatMessage($"Removed {request} from the ban list.");
+                this.ChatManager.QueueChatMessage($"已将 {request} 从屏蔽列表移除。");
                 _ = this.ListCollectionManager.Remove(s_banlist, unbanvalue);
             }
             else {
-                this.ChatManager.QueueChatMessage($"{request} is not on the ban list.");
+                this.ChatManager.QueueChatMessage($"{request} 不在屏蔽列表中。");
             }
         }
         #endregion
@@ -1168,7 +1177,7 @@ namespace SongRequestManagerV2.Bots
             try {
                 var count = 0;
                 if (RequestManager.RequestSongs.Count == 0) {
-                    this.ChatManager.QueueChatMessage("Queue is empty  .");
+                    this.ChatManager.QueueChatMessage("队列为空。");
                     return;
                 }
                 var sb = new StringBuilder();
@@ -1250,7 +1259,7 @@ namespace SongRequestManagerV2.Bots
                     }
                 }
             }
-            return $"{state.Parameter} was not found in the queue.";
+            return $"队列中未找到 {state.Parameter}。";
         }
         #endregion
 
@@ -1259,7 +1268,7 @@ namespace SongRequestManagerV2.Bots
         {
             var key = request.ToLower();
             s_mapperwhitelist = this.ListCollectionManager.OpenList(key); // BUG: this is still not the final interface
-            this.ChatManager.QueueChatMessage($"Mapper whitelist set to {request}.");
+            this.ChatManager.QueueChatMessage($"谱师白名单已切换为 {request}。");
         }
 
         public void MapperBanList(IChatUser requestor, string request)
@@ -1410,7 +1419,7 @@ namespace SongRequestManagerV2.Bots
                     return s_success;
                 }
             }
-            this.ChatManager.QueueChatMessage($"Unable to find {songId}");
+            this.ChatManager.QueueChatMessage($"未找到 {songId}");
             return s_success;
         }
 
@@ -1733,11 +1742,11 @@ namespace SongRequestManagerV2.Bots
                     // And write a summary to file
                     this.WriteQueueSummaryToFile();
 
-                    this.ChatManager.QueueChatMessage($"{songMeta["songName"].Value} ({req.ID}) {(top ? "promoted" : "demoted")}.");
+                    this.ChatManager.QueueChatMessage($"{songMeta["songName"].Value} ({req.ID}) 已{(top ? "上移" : "下移")}。");
                     return;
                 }
             }
-            this.ChatManager.QueueChatMessage($"{request} was not found in the queue.");
+            this.ChatManager.QueueChatMessage($"队列中未找到 {request}。");
         }
         #endregion
 
@@ -1746,7 +1755,7 @@ namespace SongRequestManagerV2.Bots
         // This function existing to unify the queue message strings, and to allow user configurable QueueMessages in the future
         public string QueueMessage(bool QueueState)
         {
-            return QueueState ? "Queue is open" : "Queue is closed";
+            return QueueState ? "队列已开启" : "队列已关闭";
         }
 
         public string OpenQueue(ParseState state)
@@ -1765,7 +1774,7 @@ namespace SongRequestManagerV2.Bots
         {
             RequestBotConfig.Instance.RequestQueueOpen = state;
 
-            this.ChatManager.QueueChatMessage(state ? "Queue is now open." : "Queue is now closed.");
+            this.ChatManager.QueueChatMessage(state ? "点歌队列已开启。" : "点歌队列已关闭。");
             this.WriteQueueStatusToFile(this.QueueMessage(state));
             this.RefreshSongQuere();
             this.RefreshQueue = true;
@@ -1791,7 +1800,7 @@ namespace SongRequestManagerV2.Bots
                         break;
                     }
                 }
-                File.WriteAllText(statusfile, count > 0 ? queuesummary.ToString() : "Queue is empty.");
+                File.WriteAllText(statusfile, count > 0 ? queuesummary.ToString() : "队列为空。");
             }
             catch (Exception ex) {
                 Logger.Error(ex);
@@ -1850,7 +1859,7 @@ namespace SongRequestManagerV2.Bots
             this._requestManager.WriteRequest();
 
             // Notify the chat that the queue was cleared
-            this.ChatManager.QueueChatMessage($"Queue lottery complete!");
+            this.ChatManager.QueueChatMessage("队列抽签完成。");
 
             this.ToggleQueue(state.User, state.Parameter, false); // Close the queue.
             // Reload the queue
@@ -1877,7 +1886,7 @@ namespace SongRequestManagerV2.Bots
             this.UpdateRequestUI();
 
             // Notify the chat that the queue was cleared
-            this.ChatManager.QueueChatMessage($"Queue is now empty.");
+            this.ChatManager.QueueChatMessage("点歌队列已清空。");
 
             // Reload the queue
             this.RefreshSongQuere();
@@ -1892,7 +1901,7 @@ namespace SongRequestManagerV2.Bots
             var parts = request.Split(',', ' ');
 
             if (parts.Length < 2) {
-                this.ChatManager.QueueChatMessage("usage: !remap <songid>,<songid>, omit the <>'s");
+                this.ChatManager.QueueChatMessage("用法：!remap <songid>,<songid>，不要输入尖括号。");
                 return;
             }
 
@@ -1901,7 +1910,7 @@ namespace SongRequestManagerV2.Bots
             }
 
             s_songremap.Add(parts[0], parts[1]);
-            this.ChatManager.QueueChatMessage($"Song {parts[0]} remapped to {parts[1]}");
+            this.ChatManager.QueueChatMessage($"歌曲 {parts[0]} 已重映射到 {parts[1]}");
             this.WriteRemapList();
         }
 
@@ -1909,7 +1918,7 @@ namespace SongRequestManagerV2.Bots
         {
 
             if (s_songremap.ContainsKey(request)) {
-                this.ChatManager.QueueChatMessage($"Remap entry {request} removed.");
+                this.ChatManager.QueueChatMessage($"已移除重映射项 {request}。");
                 _ = s_songremap.Remove(request);
             }
             this.WriteRemapList();
@@ -1967,14 +1976,14 @@ namespace SongRequestManagerV2.Bots
             // Note: Scanning backwards to remove LastIn, for loop is best known way.
             foreach (var song in RequestManager.RequestSongs.Reverse()) {
                 if (song.Requestor.Id == requestor.Id) {
-                    this.ChatManager.QueueChatMessage($"{song.SongMetaData["songName"].Value} ({song.ID}) removed.");
+                    this.ChatManager.QueueChatMessage($"{song.SongMetaData["songName"].Value} ({song.ID}) 已移除。");
 
                     _ = this.ListCollectionManager.Remove(s_duplicatelist, song.ID);
                     this.Skip(song, RequestStatus.Wrongsong);
                     return;
                 }
             }
-            this.ChatManager.QueueChatMessage($"You have no requests in the queue.");
+            this.ChatManager.QueueChatMessage("你当前没有在队列中的点歌。");
         }
         #endregion
 
@@ -2018,8 +2027,8 @@ namespace SongRequestManagerV2.Bots
 
         public string QueueStatus(ParseState state)
         {
-            var queuestate = RequestBotConfig.Instance.RequestQueueOpen ? "Queue is open. " : "Queue is closed. ";
-            this.ChatManager.QueueChatMessage($"{queuestate} There are {RequestManager.RequestSongs.Count} maps ({this.Queueduration()}) in the queue.");
+            var queuestate = RequestBotConfig.Instance.RequestQueueOpen ? "队列已开启。" : "队列已关闭。";
+            this.ChatManager.QueueChatMessage($"{queuestate} 当前队列中有 {RequestManager.RequestSongs.Count} 张谱面（{this.Queueduration()}）。");
             return s_success;
         }
         #endregion
