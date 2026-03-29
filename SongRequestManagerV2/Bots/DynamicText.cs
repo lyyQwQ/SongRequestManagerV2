@@ -36,7 +36,7 @@ namespace SongRequestManagerV2.Bots
                 var normalizedUserName = NormalizeUserLabel(rawUserName);
                 var resolvedDisplayName = !string.IsNullOrEmpty(normalizedDisplayName) ? normalizedDisplayName : normalizedUserName;
                 if (HasEdgeWhitespace(rawDisplayName) || HasEdgeWhitespace(rawUserName)) {
-                    Logger.Debug($"[DEBUG_UI_GAP] AddUser rawDisplay='{EscapeForLog(rawDisplayName)}' rawUser='{EscapeForLog(rawUserName)}' normalized='{EscapeForLog(resolvedDisplayName)}'");
+                    // Logger.Debug($"[DEBUG_UI_GAP] AddUser rawDisplay='{EscapeForLog(rawDisplayName)}' rawUser='{EscapeForLog(rawUserName)}' normalized='{EscapeForLog(resolvedDisplayName)}'");
                 }
                 _ = this.Add("user", resolvedDisplayName);
             }

@@ -292,7 +292,7 @@ namespace SongRequestManagerV2.Bots
 
                 var userName = NormalizeUserLabel(userObj["UserName"].Value);
                 if (HasEdgeWhitespace(userObj["DisplayName"].Value) || HasEdgeWhitespace(userObj["UserName"].Value)) {
-                    Logger.Debug($"[DEBUG_UI_GAP] CreateRequester rawDisplay='{EscapeForLog(userObj["DisplayName"].Value)}' rawUser='{EscapeForLog(userObj["UserName"].Value)}' normalizedDisplay='{EscapeForLog(displayName)}' normalizedUser='{EscapeForLog(userName)}'");
+                    // Logger.Debug($"[DEBUG_UI_GAP] CreateRequester rawDisplay='{EscapeForLog(userObj["DisplayName"].Value)}' rawUser='{EscapeForLog(userObj["UserName"].Value)}' normalizedDisplay='{EscapeForLog(displayName)}' normalizedUser='{EscapeForLog(userName)}'");
                 }
 
                 var badges = userObj["Badges"].AsArray;
@@ -482,22 +482,22 @@ namespace SongRequestManagerV2.Bots
             var requestorType = this.Requestor?.GetType().FullName ?? "<null>";
             var requestorId = this.Requestor?.Id ?? string.Empty;
             var hintFirstLine = GetFirstLine(this.Hint);
-            Logger.Debug(
-                $"[DEBUG_UI_GAP] requestId='{EscapeForLog(this.ID)}' " +
-                $"requestorType='{EscapeForLog(requestorType)}' " +
-                $"requestorId='{EscapeForLog(requestorId)}' " +
-                $"display='{EscapeForLog(requestorDisplayName)}' " +
-                $"user='{EscapeForLog(requestorUserName)}' " +
-                $"parsedUser='{EscapeForLog(parsedUser)}' " +
-                $"author='{EscapeForLog(this.AuthorName)}' " +
-                $"hintFirstLine='{EscapeForLog(hintFirstLine)}' " +
-                $"hint='{EscapeForLog(this.Hint)}' " +
-                $"parsedUserCodePoints='{DescribeCharacters(parsedUser, 32)}' " +
-                $"hintFirstLineCodePoints='{DescribeCharacters(hintFirstLine, 64)}' " +
-                $"parsedUserHasControl={ContainsControlChars(parsedUser)} " +
-                $"hintHasControl={ContainsControlChars(this.Hint)} " +
-                $"parsedUserHasRichText={ContainsRichTextTag(parsedUser)} " +
-                $"hintHasRichText={ContainsRichTextTag(this.Hint)}");
+            // Logger.Debug(
+            //     $"[DEBUG_UI_GAP] requestId='{EscapeForLog(this.ID)}' " +
+            //     $"requestorType='{EscapeForLog(requestorType)}' " +
+            //     $"requestorId='{EscapeForLog(requestorId)}' " +
+            //     $"display='{EscapeForLog(requestorDisplayName)}' " +
+            //     $"user='{EscapeForLog(requestorUserName)}' " +
+            //     $"parsedUser='{EscapeForLog(parsedUser)}' " +
+            //     $"author='{EscapeForLog(this.AuthorName)}' " +
+            //     $"hintFirstLine='{EscapeForLog(hintFirstLine)}' " +
+            //     $"hint='{EscapeForLog(this.Hint)}' " +
+            //     $"parsedUserCodePoints='{DescribeCharacters(parsedUser, 32)}' " +
+            //     $"hintFirstLineCodePoints='{DescribeCharacters(hintFirstLine, 64)}' " +
+            //     $"parsedUserHasControl={ContainsControlChars(parsedUser)} " +
+            //     $"hintHasControl={ContainsControlChars(this.Hint)} " +
+            //     $"parsedUserHasRichText={ContainsRichTextTag(parsedUser)} " +
+            //     $"hintHasRichText={ContainsRichTextTag(this.Hint)}");
         }
 
         private static string GetFirstLine(string value)

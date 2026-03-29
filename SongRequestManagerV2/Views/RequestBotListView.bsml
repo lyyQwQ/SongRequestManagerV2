@@ -16,7 +16,7 @@
         <stack>
           <horizontal vertical-fit='Unconstrained' horizontal-fit='MinSize' hover-hint='~hover-hint'>
             <text text='搜' color='yellow' font-size='3' active='~is-search' align='TopLeft' pref-width='4'></text>
-            <image id="coverImage" min-height="8" min-width="8" pref-width="10" pref-height="5" anchor-min-x="0" anchor-min-y="0" anchor-max-x="0" anchor-max-y="1" ></image>
+            <image id="coverImage" min-height="8" min-width="8" pref-width="10" pref-height="5"></image>
             <vertical horizontal-fit="Unconstrained" min-width="72" child-expand-width="true">
               <text id="songNameText" word-wrapping="false" text="~song-name"></text>
               <text id="authorNameText" word-wrapping="false" text="~author-name" color="grey" font-size="3" align="TopLeft"></text>

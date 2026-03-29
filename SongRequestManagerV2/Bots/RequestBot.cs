@@ -413,7 +413,7 @@ namespace SongRequestManagerV2.Bots
                 var bilibiliService = this.ChatManager.MultiplexerInstance?.GetBilibiliPlatformService();
                 var bilibiliChannel = bilibiliService?.DefaultChannel;
                 if (bilibiliChannel != null) {
-                    Logger.Debug($"[DEBUG_FEEDBACK_SEND] Echoing SRM feedback to bilibili default channel. channel={bilibiliChannel.Id}");
+                    // Logger.Debug($"[DEBUG_FEEDBACK_SEND] Echoing SRM feedback to bilibili default channel. channel={bilibiliChannel.Id}");
                     bilibiliChannel.SendMessage(message);
                 }
             }
