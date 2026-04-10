@@ -84,7 +84,7 @@ namespace SongRequestManagerV2.Views
 
         internal void SRMButtonPressed()
         {
-            if (this.Current is LevelSelectionFlowCoordinator) {
+            if (this.Current is LevelSelectionFlowCoordinator or MultiplayerLevelSelectionFlowCoordinator || this.Current.name == "MultiplayerPViewFlowCoordinator") {
                 this.Current.PresentFlowCoordinator(this._requestFlow, null, AnimationDirection.Horizontal, false, false);
             }
         }
