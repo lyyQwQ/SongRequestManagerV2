@@ -1,9 +1,10 @@
-﻿using CatCore.Models.Shared;
+using CatCore.Models.Shared;
 using CatCore.Models.Twitch.IRC;
 using CatCore.Services.Multiplexer;
 using IPA.Loader;
 using SongRequestManagerV2.Bases;
 using SongRequestManagerV2.Configuration;
+using SongRequestManagerV2.Compatibility;
 using SongRequestManagerV2.Extentions;
 using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.Models;
@@ -45,7 +46,7 @@ namespace SongRequestManagerV2.Bots
         public static System.Random Generator { get; } = new System.Random(Environment.TickCount); // BUG: Should at least seed from unity?
         public static List<JSONObject> Played { get; private set; } = new List<JSONObject>(); // Played list
         public static List<BotEvent> Events { get; } = new List<BotEvent>();
-        public static UserInfo CurrentUser { get; private set; }
+        public static PlatformUserSnapshot CurrentUser { get; private set; }
 
         private static StringListManager s_mapperwhitelist = new StringListManager(); // BUG: This needs to switch to list manager interface
         private static StringListManager s_mapperBanlist = new StringListManager(); // BUG: This needs to switch to list manager interface
@@ -138,7 +139,11 @@ namespace SongRequestManagerV2.Bots
         private static readonly string s_success = "";
         #region 構築・破棄
         [Inject]
+#if BS_1423
+        protected void Constractor()
+#else
         protected void Constractor(IPlatformUserModel platformUserModel)
+#endif
         {
             Logger.Debug("Constractor call");
             if (RequestBotConfig.Instance.PPSearch) {
@@ -150,10 +155,14 @@ namespace SongRequestManagerV2.Bots
             }
             this.Setup();
             if (CurrentUser == null) {
-                platformUserModel.GetUserInfo(CancellationToken.None).Await(r =>
+#if BS_1423
+                this.TryInitializeCurrentUser();
+#else
+                PlatformUserCompat.InitializeCurrentUser(platformUserModel, currentUser =>
                 {
-                    CurrentUser = r;
+                    CurrentUser = currentUser;
                 });
+#endif
             }
         }
         public void Initialize()
@@ -879,13 +888,14 @@ namespace SongRequestManagerV2.Bots
                 return new TwitchUser(obj.Id, obj.UserName, obj.DisplayName, obj.Color, obj.IsModerator, obj.IsBroadcaster, obj.IsSubscriber, obj.IsTurbo, obj.IsVip, new System.Collections.ObjectModel.ReadOnlyCollection<IChatBadge>(obj.Badges));
             }
             else {
+                this.TryInitializeCurrentUser();
                 var isInit = CurrentUser != null;
 
                 var obj = new
                 {
-                    Id = isInit ? CurrentUser.platformUserId : "",
-                    UserName = isInit ? CurrentUser.userName : "",
-                    DisplayName = isInit ? CurrentUser.userName : "",
+                    Id = isInit ? CurrentUser.PlatformUserId : "",
+                    UserName = isInit ? CurrentUser.UserName : "",
+                    DisplayName = isInit ? CurrentUser.DisplayName : "",
                     Color = "#FFFFFFFF",
                     IsBroadcaster = true,
                     IsModerator = false,
@@ -896,6 +906,20 @@ namespace SongRequestManagerV2.Bots
                 };
                 return new TwitchUser(obj.Id, obj.UserName, obj.DisplayName, obj.Color, obj.IsModerator, obj.IsBroadcaster, obj.IsSubscriber, false, false, new System.Collections.ObjectModel.ReadOnlyCollection<IChatBadge>(obj.Badges));
             }
+        }
+
+        private void TryInitializeCurrentUser()
+        {
+#if BS_1423
+            if (CurrentUser != null) {
+                return;
+            }
+
+            var currentUser = PlatformUserCompat.TryGetCurrentUser();
+            if (currentUser != null) {
+                CurrentUser = currentUser;
+            }
+#endif
         }
         public void Parse(IChatUser user, string request, CmdFlags flags = 0, string info = "")
         {

@@ -654,10 +654,28 @@ namespace SongRequestManagerV2.Views
 
         public async void Initialize()
         {
-            this._audioSource = Instantiate(Resources.FindObjectsOfTypeAll<BasicUIAudioManager>().FirstOrDefault().GetField<AudioSource, BasicUIAudioManager>("_audioSource"));
-            this._audioSource.pitch = 1;
-            var clips = Resources.FindObjectsOfTypeAll<BasicUIAudioManager>().FirstOrDefault().GetField<AudioClip[], BasicUIAudioManager>("_clickSounds");
-            this._randomSoundPicker = new RandomObjectPicker<AudioClip>(clips, 0.07f);
+            // 初始化列表选择音效；1.44 起游戏使用音源数组轮换播放，旧版本仍为单音源字段。
+            // 音效属于附属功能，接口再次变化时应继续初始化列表，避免整个点歌界面失效。
+            try {
+                var audioManager = Resources.FindObjectsOfTypeAll<BasicUIAudioManager>().FirstOrDefault();
+#if BS_1441
+                var source = audioManager?.GetField<AudioSource[], BasicUIAudioManager>("_audioSources")?.FirstOrDefault(x => x != null);
+#else
+                var source = audioManager?.GetField<AudioSource, BasicUIAudioManager>("_audioSource");
+#endif
+                var clips = audioManager?.GetField<AudioClip[], BasicUIAudioManager>("_clickSounds");
+                if (source != null && clips != null && clips.Length > 0) {
+                    this._audioSource = Instantiate(source);
+                    this._audioSource.pitch = 1;
+                    this._randomSoundPicker = new RandomObjectPicker<AudioClip>(clips, 0.07f);
+                }
+                else {
+                    Logger.Notice("无法初始化列表选择音效，点歌列表将继续加载。");
+                }
+            }
+            catch (Exception e) {
+                Logger.Notice($"初始化列表选择音效失败，点歌列表将继续加载：{e.Message}");
+            }
             try {
                 Loader.SongsLoadedEvent += this.SongLoader_SongsLoadedEvent;
             }

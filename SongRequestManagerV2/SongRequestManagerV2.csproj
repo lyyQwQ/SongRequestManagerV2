@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>9</LangVersion>
@@ -7,6 +7,18 @@
     <AssemblySearchPaths>$(ReferencePath)</AssemblySearchPaths>
     <LocalRefsDir Condition="Exists('..\Refs')">..\Refs</LocalRefsDir>
     <BeatSaberDir>$(LocalRefsDir)</BeatSaberDir>
+    <BeatSaberGameVersion Condition="'$(BeatSaberGameVersion)' == ''">1.40.8</BeatSaberGameVersion>
+    <SelectedManifestPath>manifest.1408.json</SelectedManifestPath>
+    <SelectedManifestPath Condition="'$(BeatSaberGameVersion)' == '1.42.3'">manifest.1423.json</SelectedManifestPath>
+    <SelectedManifestPath Condition="'$(BeatSaberGameVersion)' == '1.44.1'">manifest.1441.json</SelectedManifestPath>
+    <ManifestPath>$(SelectedManifestPath)</ManifestPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(BeatSaberGameVersion)' == '1.42.3'">
+    <DefineConstants>$(DefineConstants);BS_1423</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(BeatSaberGameVersion)' == '1.44.1'">
+    <!-- 1.44.1 沿用 1.42.3 引入的平台与本地化接口，并额外启用本版本专用适配。 -->
+    <DefineConstants>$(DefineConstants);BS_1423;BS_1441</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -19,8 +31,18 @@
     <None Remove="Resources\localize.csv" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>$(BeatSaberDir)\Libs\0Harmony.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="BeatSaber.ViewSystem">
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BeatSaber.ViewSystem.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="BGLib.AppFlow">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BGLib.AppFlow.dll</HintPath>
       <Private>False</Private>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
@@ -212,8 +234,15 @@
       <SpecificVersion>False</SpecificVersion>
     </Reference>
   </ItemGroup>
+  <ItemGroup Condition="'$(BeatSaberGameVersion)' == '1.42.3' OR '$(BeatSaberGameVersion)' == '1.44.1'">
+    <Reference Include="OculusStudios.Platform.Core">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\OculusStudios.Platform.Core.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+  </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="manifest.json" />
+    <EmbeddedResource Include="$(SelectedManifestPath)" LogicalName="$(AssemblyName).manifest.json" />
     <EmbeddedResource Include="Resources\localize.csv" />
     <None Include="SongRequestManagerV2.csproj.user" />
     <EmbeddedResource Include="Views\SongRequestManagerSettings.bsml" />
@@ -259,4 +288,7 @@
       <UserProperties />
     </VisualStudio>
   </ProjectExtensions>
+  <Target Name="ValidateBeatSaberGameVersion" BeforeTargets="BeforeBuild">
+    <Error Condition="'$(BeatSaberGameVersion)' != '1.40.8' AND '$(BeatSaberGameVersion)' != '1.42.3' AND '$(BeatSaberGameVersion)' != '1.44.1'" Text="BeatSaberGameVersion must be 1.40.8, 1.42.3, or 1.44.1." />
+  </Target>
 </Project>

@@ -1,6 +1,9 @@
-﻿using IPA;
+using IPA;
 using IPA.Config.Stores;
 using IPA.Loader;
+#if BS_1423
+using HarmonyLib;
+#endif
 using SiraUtil.Zenject;
 using SongRequestManagerV2.Configuration;
 using SongRequestManagerV2.Installes;
@@ -22,6 +25,9 @@ namespace SongRequestManagerV2
         public static IPALogger Logger { get; private set; }
         public bool IsApplicationExiting { get; set; } = false;
         public static Plugin Instance { get; private set; }
+#if BS_1423
+        private static Harmony s_harmony;
+#endif
 
         public static string DataPath { get; set; } = Path.Combine(Environment.CurrentDirectory, "UserData", "Song Request ManagerV2");
         [Init]
@@ -54,12 +60,29 @@ namespace SongRequestManagerV2
         [OnEnable]
         public void OnEnabled()
         {
-
+#if BS_1423
+            try {
+                s_harmony ??= Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
+            }
+            catch (Exception ex) {
+                Logger.Error(ex);
+            }
+#endif
         }
         [OnDisable]
         public void OnDisabled()
         {
-
+#if BS_1423
+            try {
+                if (s_harmony != null) {
+                    s_harmony.UnpatchSelf();
+                    s_harmony = null;
+                }
+            }
+            catch (Exception ex) {
+                Logger.Error(ex);
+            }
+#endif
         }
     }
 }
