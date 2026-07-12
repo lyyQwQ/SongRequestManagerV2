@@ -1,4 +1,5 @@
 ﻿using BeatSaberMarkupLanguage;
+using BGLib.Polyglot;
 using SongRequestManagerV2.Interfaces;
 using SongRequestManagerV2.Models;
 using SongRequestManagerV2.Statics;
@@ -378,20 +379,37 @@ namespace SongRequestManagerV2.Bots
 
             // BUG: Make this an input field maybe
 
+#if BS_1423
+            this.KeyboardText = BeatSaberUI.CreateCurvedUIText(container, "", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 30f), new Vector2(60f, 10f));
+#else
+            // 1.40.8 的 BSML 尚未提供 CreateCurvedUIText，保留该版本原生 API。
             this.KeyboardText = BeatSaberUI.CreateText(container, "", new Vector2(0, 30f));
+#endif
             this.KeyboardText.fontSize = 6f;
             this.KeyboardText.color = Color.white;
             this.KeyboardText.alignment = TextAlignmentOptions.Center;
+#if BS_1423
+            this.KeyboardText.textWrappingMode = TextWrappingModes.NoWrap;
+#else
             this.KeyboardText.enableWordWrapping = false;
+#endif
             this.KeyboardText.text = "";
             this.KeyboardText.enabled = this._enableInputField;
             //KeyboardText
 
-            this._keyboardCursor = BeatSaberUI.CreateText(container, "|", new Vector2(0, 0));
+#if BS_1423
+            this._keyboardCursor = BeatSaberUI.CreateCurvedUIText(container, "|", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(60f, 10f));
+#else
+            this._keyboardCursor = BeatSaberUI.CreateText(container, "|", Vector2.zero);
+#endif
             this._keyboardCursor.fontSize = 6f;
             this._keyboardCursor.color = Color.cyan;
             this._keyboardCursor.alignment = TextAlignmentOptions.Left;
+#if BS_1423
+            this._keyboardCursor.textWrappingMode = TextWrappingModes.NoWrap;
+#else
             this._keyboardCursor.enableWordWrapping = false;
+#endif
             this._keyboardCursor.enabled = this._enableInputField;
 
             this.DrawCursor(); // BUG: Doesn't handle trailing spaces.. seriously, wtf.
@@ -458,7 +476,7 @@ namespace SongRequestManagerV2.Bots
                 var x = key.kb._shift ? k.shifted : k.value;
                 //if (key.kb.Caps) x = k.value.ToUpper();
                 if (k.shifted != "") {
-                    k.mybutton.SetButtonText(x);
+                    k.mybutton.GetComponentInChildren<TMP_Text>(true).text = x;
                 }
 
                 if (k.name == "SHIFT") {
@@ -561,12 +579,21 @@ namespace SongRequestManagerV2.Bots
                 (this.mybutton.transform as RectTransform).anchorMin = new Vector2(0.5f, 0.5f);
                 (this.mybutton.transform as RectTransform).anchorMax = new Vector2(0.5f, 0.5f);
 
-                var txt = this.mybutton.GetComponentInChildren<TMP_Text>();
-                this.mybutton.ToggleWordWrapping(false);
+                // 动态键帽文字不能继续由本地化组件接管；BSML 旧扩展也会先执行这一步。
+                var localizedText = this.mybutton.GetComponentInChildren<LocalizedTextMeshProUGUI>(true);
+                if (localizedText != null) {
+                    UnityEngine.Object.Destroy(localizedText);
+                }
+                var txt = this.mybutton.GetComponentInChildren<TMP_Text>(true);
+#if BS_1423
+                txt.textWrappingMode = TextWrappingModes.NoWrap;
+#else
+                txt.enableWordWrapping = false;
+#endif
 
                 this.mybutton.transform.localScale = new Vector3(kb._scale, kb._scale, 1.0f);
-                this.mybutton.SetButtonTextSize(5f);
-                this.mybutton.SetButtonText(text);
+                txt.fontSize = 5f;
+                txt.text = text;
                 this.mybutton.GetComponentInChildren<Image>().color = color;
 
                 if (width == 0) {

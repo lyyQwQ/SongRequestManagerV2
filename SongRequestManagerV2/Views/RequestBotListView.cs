@@ -199,7 +199,7 @@ namespace SongRequestManagerV2.Views
             set => this.SetProperty(ref this._isShowHistory, value);
         }
         [UIValue("version")]
-        public string Version { get => "<size=120%>Version · 20250307"; set { } }
+        public string Version { get => "<size=120%>Version · 20260712"; set { } }
 
         private int SelectedRow => this._bot.CurrentSong == null ? -1 : this.Songs.IndexOf(this._bot.CurrentSong);
 
