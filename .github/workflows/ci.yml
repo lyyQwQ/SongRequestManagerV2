@@ -53,6 +53,7 @@ jobs:
           project-path: SongRequestManagerV2/SongRequestManagerV2.csproj
           project-configuration: Release
           path: ${{ github.workspace }}\Refs
+          additional-dependencies: '{"SongCore":"^3.14.15","CatCore":"^1.1.0","SiraUtil":"^3.1.14","BeatSaberMarkupLanguage":"^1.12.3"}'
 
       - name: Restore dependencies
         run: dotnet restore SongRequestManagerV2.sln -p:BeatSaberDir=${{ github.workspace }}\Refs
