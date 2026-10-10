@@ -145,10 +145,17 @@ namespace SongRequestManagerV2.Bots
             this._hash = this.SongVersion["hash"].Value;
             this._coverURL = this.SongVersion["coverURL"].Value;
             var cdnRoot = RequestBot.BEATMAPS_CDN_ROOT_URL.TrimEnd('/');
-            // as.だのna.だの指定されると重くなるっぽい？
-            this._downloadURL = this.SongVersion["downloadURL"].Value
-                .Replace(RequestBot.BEATMAPS_AS_CDN_ROOT_URL, cdnRoot)
-                .Replace(RequestBot.BEATMAPS_NA_CDN_ROOT_URL, cdnRoot);
+            if (RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.Hikarin) {
+                // Hikarin 是按 hash 提供文件的代理，API 返回的 CDN 域名不能直接使用。
+                this._downloadURL = $"{cdnRoot}/{this._hash.ToLower()}.zip";
+                this._coverURL = $"{cdnRoot}/{this._hash.ToLower()}.jpg";
+            }
+            else {
+                // as/na 指定时统一回到当前选择的 CDN，避免区域 CDN 变慢。
+                this._downloadURL = this.SongVersion["downloadURL"].Value
+                    .Replace(RequestBot.BEATMAPS_AS_CDN_ROOT_URL, cdnRoot)
+                    .Replace(RequestBot.BEATMAPS_NA_CDN_ROOT_URL, cdnRoot);
+            }
             if (this._mapDatabase.PPMap.TryGetValue(this.ID, out var pp)) {
                 this.SongNode.Add("pp", new JSONNumber(pp));
             }

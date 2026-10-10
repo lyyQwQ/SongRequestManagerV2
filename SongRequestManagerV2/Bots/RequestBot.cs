@@ -71,6 +71,8 @@ namespace SongRequestManagerV2.Bots
                         return BEATMAPS_ORIGIN_API_ROOT_URL;
                     case BeatsaverServer.EstrellaTest:
                         return "https://bsr-api.237162.xyz/api";
+                    case BeatsaverServer.Hikarin:
+                        return "https://bsaver-proxy-esa.rayarksb.fun/api";
                     default:
                         return BEATMAPS_ORIGIN_API_ROOT_URL;
                 }
@@ -83,6 +85,8 @@ namespace SongRequestManagerV2.Bots
                         return BEATMAPS_ORIGIN_CDN_ROOT_URL;
                     case BeatsaverServer.EstrellaTest:
                         return "https://bsr-cdn.237162.xyz/";
+                    case BeatsaverServer.Hikarin:
+                        return "https://bsaver-proxy-esa.rayarksb.fun";
                     default:
                         return BEATMAPS_ORIGIN_CDN_ROOT_URL;
                 }

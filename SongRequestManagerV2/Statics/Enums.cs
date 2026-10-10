@@ -222,7 +222,8 @@ namespace SongRequestManagerV2.Statics
         Beatsaver,
         BeatSaberChina,
         WGzeyu,
-        EstrellaTest
+        EstrellaTest,
+        Hikarin
     }
 
     public enum StreamerbotPlatform
