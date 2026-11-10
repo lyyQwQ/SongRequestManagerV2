@@ -64,6 +64,9 @@ namespace SongRequestManagerV2.Bots
         public const string SCRAPED_SCORE_SABER_ALL_JSON_URL = "https://cdn.wes.cloud/beatstar/bssb/v2-ranked.json";
         public const string BEATMAPS_ORIGIN_API_ROOT_URL = "https://api.beatsaver.com";
         public const string BEATMAPS_ORIGIN_CDN_ROOT_URL = "https://cdn.beatsaver.com";
+        public const string BEATMAPS_HIKARIN_DOWNLOAD_ROOT_URL = "https://bsaver-proxy-esa.rayarksb.fun";
+        public const string BEATMAPS_HIKARIN_COVER_ROOT_URL = "https://bsaver-proxy-esa.rayarksb.fun/cfcdn";
+        public const string BEATMAPS_HIKARIN_PREVIEW_ROOT_URL = "https://bsaver-proxy-esa.rayarksb.fun/cfcdn";
         public static string BEATMAPS_API_ROOT_URL {
             get {
                 switch (RequestBotConfig.Instance.BeatsaverServer) {
@@ -71,6 +74,8 @@ namespace SongRequestManagerV2.Bots
                         return BEATMAPS_ORIGIN_API_ROOT_URL;
                     case BeatsaverServer.EstrellaTest:
                         return "https://bsr-api.237162.xyz/api";
+                    case BeatsaverServer.AliyunHikarin:
+                        return "https://bsaver-proxy-esa.rayarksb.fun/api";
                     default:
                         return BEATMAPS_ORIGIN_API_ROOT_URL;
                 }
@@ -83,6 +88,8 @@ namespace SongRequestManagerV2.Bots
                         return BEATMAPS_ORIGIN_CDN_ROOT_URL;
                     case BeatsaverServer.EstrellaTest:
                         return "https://bsr-cdn.237162.xyz/";
+                    case BeatsaverServer.AliyunHikarin:
+                        return BEATMAPS_HIKARIN_DOWNLOAD_ROOT_URL;
                     default:
                         return BEATMAPS_ORIGIN_CDN_ROOT_URL;
                 }

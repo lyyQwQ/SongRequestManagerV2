@@ -218,6 +218,9 @@ namespace SongRequestManagerV2.Bots
                     if (!imageSet) {
                         var cdnRoot = RequestBot.BEATMAPS_CDN_ROOT_URL.TrimEnd('/');
                         var url = !string.IsNullOrEmpty(this._coverURL) ? this._coverURL : $"{cdnRoot}/{this._hash.ToLower()}.jpg";
+                        if (RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.AliyunHikarin) {
+                            url = $"{RequestBot.BEATMAPS_HIKARIN_COVER_ROOT_URL}/{this._hash.ToLowerInvariant()}.jpg";
+                        }
                         if (!TryGetCoverTextureFromCache(url, out var tex)) {
                             var b = await WebClient.DownloadImage(url, CancellationToken.None).ConfigureAwait(true);
 
@@ -346,6 +349,9 @@ namespace SongRequestManagerV2.Bots
                 var url = !string.IsNullOrEmpty(this._downloadURL)
                     ? this._downloadURL
                     : $"{cdnRoot}/{this._hash.ToLower()}.zip";
+                if (RequestBotConfig.Instance.BeatsaverServer == BeatsaverServer.AliyunHikarin) {
+                    url = $"{RequestBot.BEATMAPS_HIKARIN_DOWNLOAD_ROOT_URL}/{this._hash.ToLowerInvariant()}.zip";
+                }
 
                 if (DownloadService.Instance == null) {
                     Logger.Error("DownloadService.Instance == null，无法下载谱面。");

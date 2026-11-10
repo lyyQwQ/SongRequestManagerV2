@@ -167,7 +167,8 @@ namespace SongRequestManagerV2.Views
         public List<object> BeatsaverServers { get; } = new List<object>()
             {
                 BeatsaverServerToChinese(BeatsaverServer.Beatsaver),
-                BeatsaverServerToChinese(BeatsaverServer.EstrellaTest)
+                BeatsaverServerToChinese(BeatsaverServer.EstrellaTest),
+                BeatsaverServerToChinese(BeatsaverServer.AliyunHikarin)
             };
 
         [UIValue("beatsaver-server")]
@@ -285,6 +286,8 @@ namespace SongRequestManagerV2.Views
                     return "默认(BeatSaver)";
                 case BeatsaverServer.EstrellaTest:
                     return "中国大陆(Estrella)";
+                case BeatsaverServer.AliyunHikarin:
+                    return "阿里云(Hikarin)";
                 default:
                     return "默认(BeatSaver)";
             }
